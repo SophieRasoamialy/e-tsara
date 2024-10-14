@@ -42,7 +42,11 @@ jobs:
 
       #  Construction des images Docker
       - name: Build Docker images
-        run: docker-compose build
+        run: |
+          docker-compose build
+          docker tag autograder-backend:latest hasindrae/autograder-backend:latest
+          docker tag autograder-frontend:latest hasindrae/autograder-frontend:latest
+
 
       #  Push vers Docker Hub
       - name: Push to Docker Hub
