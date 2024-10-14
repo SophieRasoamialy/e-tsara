@@ -1,0 +1,72 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout du code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      #  Configuration de Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      # Installation des dépendances
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./autograder-backend
+
+      # Installation des dépendances du frontend
+      - name: Install Frontend Dependencies
+        run: npm install
+        working-directory: ./autograder-frontend
+
+      #  Construction des images Docker
+      - name: Build Docker images
+        run: docker-compose build
+
+      #  Push vers Docker Hub
+      - name: Push to Docker Hub
+        run: docker push hasindrae/autograder-project
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Étape 7 : Installer awscli
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      # Étape 8 : Configurer awscli
+      - name: Configure AWS CLI
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region us-east-1 
+
+      # Étape 9 : Installer eksctl
+      - name: Install eksctl
+        run: |
+          curl --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/eksctl /usr/local/bin
+
+      # Étape 10 : Mettre à jour kubeconfig
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name autograder
+
+      # Étape 11 : Déploiement sur Kubernetes
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
