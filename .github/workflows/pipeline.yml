@@ -10,77 +10,84 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout du code
       - name: Checkout code
         uses: actions/checkout@v2
 
-        # Étape 2 : Installer Docker
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-        # Étape 3 : Installer Docker Compose
       - name: Install Docker Compose
         run: |
-            sudo curl -L "https://github.com/docker/compose/releases/download/v2.10.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.10.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
 
-        #  Configuration de Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-            node-version: '16'
+          node-version: '16'
 
-      # Installation des dépendances
-      - name: Install dependencies
-        run: npm install
+      # Backend dependencies
+      - name: Install Backend Dependencies
+        run: npm ci
         working-directory: ./autograder-backend
 
-      # Installation des dépendances du frontend
+      # Frontend dependencies
       - name: Install Frontend Dependencies
-        run: npm install
+        run: npm ci
         working-directory: ./autograder-frontend
 
-      #  Construction des images Docker
+      # Build Docker images
       - name: Build Docker images
         run: |
           docker-compose build
           docker tag autograder-backend:latest hasindrae/autograder-backend:latest
           docker tag autograder-frontend:latest hasindrae/autograder-frontend:latest
 
+      - name: Verify Docker images
+        run: docker images
 
-      #  Push vers Docker Hub
-      - name: Push to Docker Hub
-        run: docker push hasindrae/autograder-project
+      # Push Backend to Docker Hub
+      - name: Push Backend to Docker Hub
+        run: docker push hasindrae/autograder-backend:latest
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Étape 7 : Installer awscli
+      # Push Frontend to Docker Hub
+      - name: Push Frontend to Docker Hub
+        run: docker push hasindrae/autograder-frontend:latest
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Install AWS CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y awscli
 
-      # Étape 8 : Configurer awscli
       - name: Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region us-east-1 
 
-      # Étape 9 : Installer eksctl
       - name: Install eksctl
         run: |
           curl --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
 
-      # Étape 10 : Mettre à jour kubeconfig
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --name autograder
 
-      # Étape 11 : Déploiement sur Kubernetes
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
+
+      - name: Check Pods Status
+        run: kubectl get pods
+
+      - name: Get logs for debugging
+        if: failure()
+        run: kubectl logs -l app=autograder-backend

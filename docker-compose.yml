@@ -6,6 +6,7 @@ services:
     build:
       context: ./autograder-frontend  # Chemin vers le répertoire contenant le Dockerfile du frontend
       dockerfile: Dockerfile  # Spécifie le nom du Dockerfile
+    image: autograder-frontend:latest
     ports:
       - "3000:80"  # Mappe le port 80 du conteneur au port 3000 de la machine hôte
     depends_on:
@@ -18,6 +19,7 @@ services:
     build:
       context: ./autograder-backend  # Chemin vers le répertoire contenant le Dockerfile du backend
       dockerfile: Dockerfile  # Spécifie le nom du Dockerfile
+    image: autograder-backend:latest
     ports:
       - "8000:8000"  # Mappe le port 8000 du conteneur au port 8000 de la machine hôte
     environment:
