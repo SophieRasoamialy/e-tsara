@@ -6,7 +6,7 @@ metadata:
   version: "1.23"
 managedNodeGroups:
 - name: t2-micro-nodes
-  instanceType: t2.micro
+  instanceType: t3.small
   desiredCapacity: 1
   minSize: 1
   maxSize: 3
