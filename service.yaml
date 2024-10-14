@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: autograder-service
+  labels:
+    app: autograder
+spec:
+  type: LoadBalancer  # Utiliser LoadBalancer pour exposer le service sur un IP externe
+  ports:
+    - name: frontend
+      port: 80  # Port exposé par le service
+      targetPort: 80  # Port sur lequel le frontend écoute dans le conteneur
+    - name: backend
+      port: 8000  # Port exposé par le service pour le backend
+      targetPort: 8000  # Port sur lequel le backend écoute dans le conteneur
+  selector:
+    app: autograder  # Sélecteur pour correspondre aux pods du déploiement

@@ -1,0 +1,19 @@
+/* styles.css */
+@media print {
+    body * {
+      visibility: hidden;
+    }
+  
+    #printable-section,
+    #printable-section * {
+      visibility: visible;
+    }
+  
+    #printable-section {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+  }
+  

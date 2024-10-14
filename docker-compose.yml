@@ -1,0 +1,59 @@
+version: '3.8'  # Utilisation de la version 3.8 pour bénéficier des dernières fonctionnalités
+
+services:
+  # Service pour le frontend React
+  frontend:
+    build:
+      context: ./autograder-frontend  # Chemin vers le répertoire contenant le Dockerfile du frontend
+      dockerfile: Dockerfile  # Spécifie le nom du Dockerfile
+    ports:
+      - "3000:80"  # Mappe le port 80 du conteneur au port 3000 de la machine hôte
+    depends_on:
+      - backend  # Assure que le backend démarre avant le frontend
+    networks:
+      - app-network  # Connecte le frontend au réseau
+
+  # Service pour le backend Node.js
+  backend:
+    build:
+      context: ./autograder-backend  # Chemin vers le répertoire contenant le Dockerfile du backend
+      dockerfile: Dockerfile  # Spécifie le nom du Dockerfile
+    ports:
+      - "8000:8000"  # Mappe le port 8000 du conteneur au port 8000 de la machine hôte
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/autograderDB  # URI de connexion à MongoDB
+    depends_on:
+      - mongo  # Assure que MongoDB démarre avant le backend
+    networks:
+      - app-network  # Connecte le backend au réseau
+
+  # Service pour la base de données MongoDB
+  mongo:
+    image: mongo:latest  # Utilise l'image officielle de MongoDB
+    ports:
+      - "27017:27017"  # Mappe le port 27017 du conteneur au port 27017 de la machine hôte
+    volumes:
+      - mongo-data:/data/db  # Monte un volume pour persister les données de MongoDB
+    networks:
+      - app-network  # Connecte MongoDB au réseau
+
+  # Service pour le seed de la base de données
+  seed:
+    build:
+      context: ./autograder-backend  # Chemin vers le répertoire contenant le Dockerfile du backend
+      dockerfile: Dockerfile  # Spécifie le nom du Dockerfile
+    command: ["node", "seed.js"]  # Commande pour exécuter le fichier seed
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/autograderDB  # URI de connexion MongoDB
+    depends_on:
+      - mongo  # Assure que MongoDB est démarré avant le seed
+    networks:
+      - app-network  # Connecte le seed au réseau
+
+# Déclaration du réseau pour la communication entre les services
+networks:
+  app-network:
+
+# Déclaration du volume pour MongoDB
+volumes:
+  mongo-data:  # Volume pour persister les données de MongoDB

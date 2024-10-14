@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: host-pv  # Nom du PersistentVolume
+spec:
+  capacity:
+    storage: 1Gi  # Capacité du volume
+  volumeMode: Filesystem  # Mode de volume
+  storageClassName: standard  # Nom de la classe de stockage
+  accessModes:
+    - ReadWriteOnce  # Modes d'accès autorisés
+  hostPath:
+    path: /data  # Chemin sur l'hôte
+    type: DirectoryOrCreate  # Type d'hostPath
