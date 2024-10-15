@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongo-seed-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: seed-container
+        image: hasindrae/autograder-backend:latest
+        command: ["node", "seed.js"]  # Commande pour exécuter le script seed
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongo:27017/autograderDB"  # URL de ta base MongoDB
+      restartPolicy: Never
+  backoffLimit: 4  # Limite de réessais en cas d'échec
