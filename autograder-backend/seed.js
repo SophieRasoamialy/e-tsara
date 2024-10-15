@@ -5,7 +5,12 @@ const Role = require("./models/Role");
 require('dotenv').config(); 
 
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongodb-service:27017/autograderDB';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongo-db:27017/autograderDB';
+
+
+
+
+
 
 // Fonction pour établir la connexion à la base de données
 const connectDB = async () => {
