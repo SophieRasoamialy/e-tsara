@@ -19,11 +19,6 @@ spec:
         image: mongo:4.4
         ports:
         - containerPort: 27017
-        env:
-          - name: MONGO_INITDB_ROOT_USERNAME
-            value: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}  # Utilisation des secrets
-          - name: MONGO_INITDB_ROOT_PASSWORD
-            value: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}  # Utilisation des secrets
         volumeMounts:
           - mountPath: /data/db
             name: mongo-data

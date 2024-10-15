@@ -26,4 +26,4 @@ spec:
         - containerPort: 8000
         env:
         - name: MONGO_URI
-          value: "mongodb://$(MONGO_INITDB_ROOT_USERNAME:$(MONGO_INITDB_ROOT_PASSWORD)@mongo-db:27017/autograderdb"  # URI avec authentification utilisant le secret
+          value: "mongodb://mongo:27017/autograderDB " 
