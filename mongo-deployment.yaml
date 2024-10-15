@@ -21,7 +21,7 @@ spec:
         - containerPort: 27017
         env:
           - name: MONGO_URI
-            value: ${{ secrets.MONGO_URI }}
+            value: mongodb://mongo-db:27017/autograderDB
         volumeMounts:
           - mountPath: /data/db
             name: mongo-data

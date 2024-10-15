@@ -35,7 +35,7 @@ app.use(session({
 
 // Configuration CORS
 app.use(cors({
-  origin: 'http://localhost:3000', 
+  origin: 'http://localhost:80', 
   credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
