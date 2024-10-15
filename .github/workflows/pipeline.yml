@@ -38,7 +38,13 @@ jobs:
 
       # Build Docker images
       - name: Build Docker images
-        run: docker-compose build 
+        
+        run: |
+          docker-compose build
+          # Utiliser le SHA du commit pour taguer l'image
+          IMAGE_VERSION=${{ github.sha }}
+          docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
+          docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION}
 
       - name: Verify Docker images
         run: docker images
@@ -49,11 +55,11 @@ jobs:
 
       # Push Backend to Docker Hub  
       - name: Push Backend to Docker Hub
-        run: docker push hasindrae/autograder-backend:latest
+        run: docker push hasindrae/autograder-backend:${{ github.sha }}
 
       # Push Frontend to Docker Hub  
       - name: Push Frontend to Docker Hub
-        run: docker push hasindrae/autograder-frontend:latest
+        run: docker push hasindrae/autograder-frontend:${{ github.sha }}
 
       - name: Install AWS CLI
         run: |
@@ -86,6 +92,11 @@ jobs:
         run: |
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
+
+      - name: Update Kubernetes Deployment with new images
+        run: |
+          kubectl set image deployment/autograder-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }} backend=hasindrae/autograder-backend:${{ github.sha }}
+
 
       - name: Check Pods Status
         run: kubectl get pods
