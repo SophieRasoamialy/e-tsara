@@ -25,7 +25,7 @@ spec:
         ports:
         - containerPort: 8000
         env:
-        - name: MONGO_URL
+        - name: MONGO_URI
           value: "mongodb://mongo:27017/autograderdb"
 
       - name: mongo

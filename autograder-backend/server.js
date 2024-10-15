@@ -68,7 +68,6 @@ app.use('/api/notifications', notificationRoutes);
 
 app.get('/cook', (req, res) => {
   console.log('Cookies:', req.cookies);
-  // Autres traitements...
 });
 
 
