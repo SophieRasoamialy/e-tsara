@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  labels:
+    app: autograder
+spec:
+  type: ClusterIP  # Utilise ClusterIP pour garder le backend interne
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    app: autograder
