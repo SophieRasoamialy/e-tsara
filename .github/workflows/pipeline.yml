@@ -90,6 +90,7 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
+          kubectl apply -f mongodb-deployment.yaml
           kubectl apply -f deployment.yaml
           kubectl apply -f frontend-service.yaml
           kubectl apply -f backend-service.yaml
