@@ -90,11 +90,18 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
+          kubectl apply -f host-pv.yaml
+          kubectl apply -f host-pvc.yaml
+
+          # Attendre que le PVC soit lié avant de continuer
+          kubectl wait --for=condition=Bound pvc/mongo-pvc --timeout=60s
+
           kubectl apply -f mongo-deployment.yaml
           kubectl apply -f deployment.yaml
           kubectl apply -f frontend-service.yaml
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
+          
 
       - name: Update Kubernetes Deployment with new images
         run: |
