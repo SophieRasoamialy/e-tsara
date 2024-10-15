@@ -88,14 +88,28 @@ jobs:
         run: |
           aws eks update-kubeconfig --name autograder
 
+          - name: Vérifier si le PV existe
+          id: check_pv
+          run: |
+            kubectl get pv host-pv || echo "PV missing"
+  
+      - name: Appliquer le PV si manquant
+        if: steps.check_pv.outputs.pv_missing
+        run: kubectl apply -f host-pv.yaml
+  
+      - name: Vérifier si le PVC existe
+        id: check_pvc
+        run: |
+            kubectl get pvc host-pvc || echo "PVC missing"
+  
+      - name: Appliquer le PVC si manquant
+        if: steps.check_pvc.outputs.pvc_missing
+        run: |
+          kubectl apply -f host-pvc.yaml
+          kubectl wait --for=condition=Bound pvc/mongo-pvc --timeout=60s
+
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f host-pv.yaml
-          kubectl apply -f host-pvc.yaml
-
-          # Attendre que le PVC soit lié avant de continuer
-          kubectl wait --for=condition=Bound pvc/host-pvc --timeout=60s
-
           kubectl apply -f mongo-deployment.yaml
           kubectl apply -f deployment.yaml
           kubectl apply -f frontend-service.yaml
