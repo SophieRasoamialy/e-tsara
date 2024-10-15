@@ -38,10 +38,7 @@ jobs:
 
       # Build Docker images
       - name: Build Docker images
-        run: |
-          docker-compose build
-          docker tag autograder-backend:latest hasindrae/autograder-backend:latest
-          docker tag autograder-frontend:latest hasindrae/autograder-frontend:latest
+        run: docker-compose build 
 
       - name: Verify Docker images
         run: docker images
