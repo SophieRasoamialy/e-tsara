@@ -31,7 +31,7 @@ services:
 
   # Service pour la base de données MongoDB
   mongo:
-    image: mongo:latest  # Utilise l'image officielle de MongoDB
+    image: mongo:4.4  # Utilise l'image officielle de MongoDB
     ports:
       - "27017:27017"  # Mappe le port 27017 du conteneur au port 27017 de la machine hôte
     volumes:
