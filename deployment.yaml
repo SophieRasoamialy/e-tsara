@@ -40,3 +40,4 @@ spec:
       - name: mongo-data
         persistentVolumeClaim:
           claimName: host-pvc
+
