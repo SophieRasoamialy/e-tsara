@@ -35,7 +35,7 @@ app.use(session({
 
 // Configuration CORS
 app.use(cors({
-  origin: 'http://localhost:80', 
+  origin: 'http://adfa5bdfdda4b41f6962d68719fb3793-1551523519.us-east-1.elb.amazonaws.com', 
   credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
