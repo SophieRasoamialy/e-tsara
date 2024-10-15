@@ -4,10 +4,13 @@ const User = require("./models/User");
 const Role = require("./models/Role"); 
 require('dotenv').config(); 
 
+console.log("mongo uri>>>", process.env.MONGO_URI)
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongodb-service:27017/autograderDB';
+
 // Fonction pour établir la connexion à la base de données
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
+    await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
