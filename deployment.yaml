@@ -5,7 +5,7 @@ metadata:
   labels:
     app: autograder
 spec:
-  replicas: 2
+  replicas: 2  # Nombre de réplicas pour le backend et le frontend
   selector:
     matchLabels:
       app: autograder
@@ -26,18 +26,4 @@ spec:
         - containerPort: 8000
         env:
         - name: MONGO_URI
-          value: "mongodb://mongo:27017/autograderdb"
-
-      - name: mongo
-        image: mongo:latest
-        ports:
-        - containerPort: 27017
-        volumeMounts:
-        - name: mongo-data
-          mountPath: /data/db
-
-      volumes:
-      - name: mongo-data
-        persistentVolumeClaim:
-          claimName: host-pvc
-
+          value: "mongodb://$(MONGO_INITDB_ROOT_USERNAME:$(MONGO_INITDB_ROOT_PASSWORD)@mongo-db:27017/autograderdb"  # URI avec authentification utilisant le secret

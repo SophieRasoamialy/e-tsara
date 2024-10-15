@@ -23,7 +23,7 @@ services:
     ports:
       - "8000:8000"  # Mappe le port 8000 du conteneur au port 8000 de la machine hôte
     environment:
-      - MONGO_URI=mongodb://mongo:27017/autograderDB  # URI de connexion à MongoDB
+      - MONGO_URI=mongodb://admin:admin@mongo:27017/autograderDB  # URI de connexion à MongoDB avec identifiants
     depends_on:
       - mongo  # Assure que MongoDB démarre avant le backend
     networks:
@@ -46,7 +46,7 @@ services:
       dockerfile: Dockerfile  # Spécifie le nom du Dockerfile
     command: ["node", "seed.js"]  # Commande pour exécuter le fichier seed
     environment:
-      - MONGO_URI=mongodb://mongo:27017/autograderDB  # URI de connexion MongoDB
+      - MONGO_URI=mongodb://admin:admin@mongo:27017/autograderDB  # URI de connexion à MongoDB avec identifiants
     depends_on:
       - mongo  # Assure que MongoDB est démarré avant le seed
     networks:
