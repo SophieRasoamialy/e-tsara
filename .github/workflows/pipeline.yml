@@ -57,6 +57,7 @@ jobs:
       # Push Frontend to Docker Hub  
       - name: Push Frontend to Docker Hub
         run: docker push hasindrae/autograder-frontend:latest
+        
 
       - name: Install AWS CLI
         run: |

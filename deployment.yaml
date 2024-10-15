@@ -16,12 +16,12 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: hasindrae/frontend-image:latest
+        image: hasindrae/autograder-frontend:latest
         ports:
         - containerPort: 80
 
       - name: backend
-        image: hasindrae/backend-image:latest
+        image: hasindrae/autograder-backend:latest 
         ports:
         - containerPort: 8000
         env:
