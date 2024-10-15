@@ -23,15 +23,17 @@ const app = express();
 
 
 app.use(session({
-  secret: SECRET_KEY,
-  resave: false,
-  saveUninitialized: true,
+  secret: SECRET_KEY,             // Clé secrète pour signer le cookie
+  resave: false,                  // Ne pas enregistrer la session si elle n'a pas été modifiée
+  saveUninitialized: false,       // Ne pas créer de session jusqu'à ce qu'elle soit modifiée
   cookie: {
-    Secure: true, 
-    HttpOnly: true,
-    SameSite: 'None' 
+    secure: true,                 // Le cookie doit être envoyé uniquement sur HTTPS
+    httpOnly: true,               // Le cookie n'est pas accessible par JavaScript côté client
+    sameSite: 'Lax',              // L'option Lax est généralement plus sûre pour les cookies
+    maxAge: 24 * 60 * 60 * 1000   // Durée de vie du cookie (ex. 24 heures)
   }
 }));
+
 
 // Configuration CORS
 app.use(cors({
