@@ -30,7 +30,7 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await fetch("http://backend-service:8000/api/users/login", {
+      const response = await fetch("http://ab99fafc3a94f4d68bfb664996b58dc1-1276899171.us-east-1.elb.amazonaws.com/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
