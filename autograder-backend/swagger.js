@@ -11,7 +11,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:3001', 
+        url: 'http://ab99fafc3a94f4d68bfb664996b58dc1-1276899171.us-east-1.elb.amazonaws.com', 
         description: 'Serveur local',
       },
     ],
