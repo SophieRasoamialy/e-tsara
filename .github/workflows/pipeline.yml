@@ -121,7 +121,6 @@ jobs:
         run: |
           kubectl set image deployment/autograder-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }} backend=hasindrae/autograder-backend:${{ github.sha }}
 
-
       - name: Check Pods Status
         run: kubectl get pods
 
