@@ -4,7 +4,9 @@ metadata:
   name: autograder-ingress
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.100.249.111"
 spec:
+  ingressClassName: nginx  # Spécifiez la classe d'Ingress ici
   rules:
   - host: "ab99fafc3a94f4d68bfb664996b58dc1-1276899171.us-east-1.elb.amazonaws.com"
     http:
@@ -13,13 +15,13 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend-service  # Redirige le trafic vers le service frontend
+            name: frontend-service
             port:
               number: 80
       - path: /api
         pathType: Prefix
         backend:
           service:
-            name: backend-service  # Redirige les appels API vers le backend
+            name: backend-service
             port:
               number: 8000
