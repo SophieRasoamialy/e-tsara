@@ -20,6 +20,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const SECRET_KEY = process.env.SECRET_KEY;
 console.log("SECRET_KEY:", process.env.SECRET_KEY);
 
+
 const app = express();
 
 
@@ -48,6 +49,7 @@ app.options('*', cors()); // Préparer le backend à répondre aux requêtes COR
 
 
 app.use(cookieParser());
+
 console.log("mongo uri", process.env.MONGO_URI)
 // Connexion à MongoDB
 mongoose.connect(process.env.MONGO_URI, {
