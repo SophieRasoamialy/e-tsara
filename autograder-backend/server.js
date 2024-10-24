@@ -66,7 +66,7 @@ app.get('/api', (req, res) => {
   res.json({ message: 'API is running' });
 });
 
-app.use('/api/users', userRoutes);
+app.use('/users', userRoutes);
 app.use('/api/classes', niveauRoutes);
 app.use('/api/etudiants', etudiantRoutes);
 app.use('/api/modules', moduleRoutes);
