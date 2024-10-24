@@ -13,16 +13,37 @@ spec:
     metadata:
       labels:
         app: autograder
+        role: frontend  # Ajout du label role pour le pod frontend
     spec:
       containers:
       - name: frontend
         image: hasindrae/autograder-frontend:latest
         ports:
         - containerPort: 80
-        # Ajout d'étiquettes spécifiques pour identifier les pods frontend
         env:
         - name: ROLE
           value: frontend
+      # Le backend doit être dans un autre pod, donc créer un autre template ou ajuster les réplicas
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autograder-backend-deployment  # Nom du déploiement backend
+  labels:
+    app: autograder
+spec:
+  replicas: 2  # Nombre de réplicas pour le backend
+  selector:
+    matchLabels:
+      app: autograder
+      role: backend  # Le selector doit correspondre au label du backend
+  template:
+    metadata:
+      labels:
+        app: autograder
+        role: backend  # Ajout du label role pour le pod backend
+    spec:
+      containers:
       - name: backend
         image: hasindrae/autograder-backend:latest
         ports:
@@ -35,7 +56,6 @@ spec:
             secretKeyRef:
               name: backend-secrets
               key: SECRET_KEY
-        # Ajout d'étiquettes spécifiques pour identifier les pods backend
         env:
         - name: ROLE
           value: backend
