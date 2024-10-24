@@ -30,7 +30,7 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await fetch("http://aca7e997df18e493e89e45aff172a1dd-58687001.us-east-1.elb.amazonaws.com/api/users/login", {
+      const response = await fetch("/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
