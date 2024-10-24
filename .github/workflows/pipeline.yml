@@ -107,10 +107,7 @@ jobs:
         run: |
           kubectl apply -f host-pvc.yaml
           kubectl wait --for=condition=Bound pvc/mongo-pvc --timeout=60s
-      - name: Create Kubernetes Secret for Backend
-        run: |
-          kubectl create secret generic backend-secrets --from-literal=SECRET_KEY=${{ secrets.SECRET_KEY }}
-    
+
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f mongo-deployment.yaml
@@ -119,9 +116,6 @@ jobs:
           kubectl apply -f frontend-service.yaml
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
-          kubectl set env deployment/backend-deployment SECRET_KEY=${{ secrets.SECRET_KEY }}
-          kubectl set env deployment/backend-deployment MONGO_URI=${{ secrets.MONGO_URI }}
-
 
        # Déployer Ingress NGINX
       - name: Deploy Ingress NGINX
