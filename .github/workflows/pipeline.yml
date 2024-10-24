@@ -115,7 +115,10 @@ jobs:
           kubectl apply -f frontend-service.yaml
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
-          kubectl set env deployment/autograder-deployment SECRET_KEY=${{ secrets.SECRET_KEY }}
+      - name: Create Kubernetes Secret
+        run: |
+          kubectl create secret generic backend-secrets --from-literal=SECRET_KEY=${{ secrets.SECRET_KEY }} --dry-run=client -o yaml | kubectl apply -f -
+    
           
        # Déployer Ingress NGINX
       - name: Deploy Ingress NGINX
