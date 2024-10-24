@@ -37,11 +37,14 @@ app.use(session({
 
 // Configuration CORS
 app.use(cors({
-  origin: 'http://aab99fafc3a94f4d68bfb664996b58dc1-1276899171.us-east-1.elb.amazonaws.com', 
+  origin: ['http://aca7e997df18e493e89e45aff172a1dd-58687001.us-east-1.elb.amazonaws.com', 'http://localhost:3000'], 
   credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
+
+app.options('*', cors()); // Préparer le backend à répondre aux requêtes CORS OPTIONS
+
 
 app.use(cookieParser());
 console.log("mongo uri", process.env.MONGO_URI)
@@ -58,6 +61,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Utilisation des routes utilisateur
+app.get('/api', (req, res) => {
+  res.json({ message: 'API is running' });
+});
+
 app.use('/api/users', userRoutes);
 app.use('/api/classes', niveauRoutes);
 app.use('/api/etudiants', etudiantRoutes);
