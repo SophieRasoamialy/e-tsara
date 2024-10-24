@@ -25,9 +25,6 @@ spec:
         - name: MONGO_URI
           value: mongodb://mongo-db:27017/autograderDB
         - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: backend-secrets
-              key: SECRET_KEY
+          value: YrG4d72V66jhSW5jbxpW34tUBfdtKGhR84uHtR33WfXq696V93
         - name: ROLE
           value: backend
