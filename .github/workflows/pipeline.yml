@@ -129,7 +129,7 @@ jobs:
       - name: Update Kubernetes Deployment with new images
         run: |
           kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }}
-          kubectl set image deployment/backend-backend-deployment backend=hasindrae/autograder-backend:${{ github.sha }}
+          kubectl set image deployment/backend-deployment backend=hasindrae/autograder-backend:${{ github.sha }}
 
 
       - name: Check Pods Status
