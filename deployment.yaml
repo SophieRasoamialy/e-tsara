@@ -27,3 +27,8 @@ spec:
         env:
         - name: MONGO_URI
           value: mongodb://mongo-db:27017/autograderDB
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: SECRET_KEY

@@ -18,6 +18,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 
 // Configuration de la clé secrète pour JWT 
 const SECRET_KEY = process.env.SECRET_KEY;
+console.log("SECRET_KEY:", process.env.SECRET_KEY);
 
 const app = express();
 
