@@ -2,13 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
-  labels:
-    app: autograder
 spec:
-  type: LoadBalancer
-  ports:
-    - port: 80
-      targetPort: 80
   selector:
     app: autograder
-    role: frontend   # Sélecteur plus spécifique pour le frontend
+    role: frontend  # Assurez-vous que cela correspond au label du pod
+  ports:
+  - protocol: TCP
+    port: 80        # Port du service
+    targetPort: 80  # Port du conteneur
+  type: LoadBalancer  # Changez le type en LoadBalancer

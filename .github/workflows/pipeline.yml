@@ -116,6 +116,8 @@ jobs:
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
           kubectl set env deployment/autograder-deployment SECRET_KEY=${{ secrets.SECRET_KEY }}
+          kubectl set env deployment/autograder-deployment MONGO_URI=${{ secrets.MONGO_URI }}
+
 
        # Déployer Ingress NGINX
       - name: Deploy Ingress NGINX
