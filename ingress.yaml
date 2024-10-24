@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: autograder-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1  # Utilisez $1 au lieu de $2 pour correspondre au groupe de capture
+    nginx.ingress.kubernetes.io/rewrite-target: /$1 
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
@@ -24,4 +24,74 @@ spec:
               service:
                 name: frontend-service
                 port:
-                  number: 80
+                  number: 8
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
