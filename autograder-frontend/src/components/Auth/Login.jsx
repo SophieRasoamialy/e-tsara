@@ -30,7 +30,7 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await fetch("/api/users/login", {
+      const response = await fetch("http://backend-service:8000/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
