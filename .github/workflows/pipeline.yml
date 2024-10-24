@@ -111,12 +111,13 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f mongo-deployment.yaml
-          kubectl apply -f deployment.yaml
+          kubectl apply -f backend-deployment.yaml
+          kubectl apply -f frontend-deployment.yaml
           kubectl apply -f frontend-service.yaml
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
-          kubectl set env deployment/autograder-deployment SECRET_KEY=${{ secrets.SECRET_KEY }}
-          kubectl set env deployment/autograder-deployment MONGO_URI=${{ secrets.MONGO_URI }}
+          kubectl set env deployment/backend-deployment SECRET_KEY=${{ secrets.SECRET_KEY }}
+          kubectl set env deployment/backend-deployment MONGO_URI=${{ secrets.MONGO_URI }}
 
 
        # Déployer Ingress NGINX
@@ -127,7 +128,9 @@ jobs:
 
       - name: Update Kubernetes Deployment with new images
         run: |
-          kubectl set image deployment/autograder-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }} backend=hasindrae/autograder-backend:${{ github.sha }}
+          kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }}
+          kubectl set image deployment/backend-backend-deployment backend=hasindrae/autograder-backend:${{ github.sha }}
+
 
       - name: Check Pods Status
         run: kubectl get pods
