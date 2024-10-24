@@ -3,8 +3,13 @@ kind: Ingress
 metadata:
   name: autograder-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1 
+    nginx.ingress.kubernetes.io/rewrite-target: /api/$1
     nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type"
+
 spec:
   ingressClassName: nginx
   rules:
@@ -24,7 +29,7 @@ spec:
               service:
                 name: frontend-service
                 port:
-                  number: 8
+                  number: 80
 
 
 
