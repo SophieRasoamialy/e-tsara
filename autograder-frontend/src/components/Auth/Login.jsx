@@ -29,7 +29,10 @@ const Login = () => {
   });
 
   const onSubmit = async (data) => {
+    console.log('Sending request to:', '/api/users/login');
+      console.log('Request data:', data);
     try {
+      
       const response = await fetch("/api/users/login", {
         method: "POST",
         headers: {
@@ -61,7 +64,7 @@ const Login = () => {
         alert("Login failed: " + errorData.msg);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Fetch error:', error);
     }
   };
 
