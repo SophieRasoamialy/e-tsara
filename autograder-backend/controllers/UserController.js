@@ -104,6 +104,7 @@ exports.register = async (req, res) => {
 // Fonction pour la connexion (login)
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+  console.log('Requête reçue:', req.body);
 
   try {
     // Recherche de l'utilisateur par adresse email
