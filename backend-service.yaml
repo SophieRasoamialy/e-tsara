@@ -11,3 +11,4 @@ spec:
       targetPort: 8000
   selector:
     app: autograder
+    role: backend   # Sélecteur plus spécifique pour le backend

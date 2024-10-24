@@ -19,9 +19,12 @@ spec:
         image: hasindrae/autograder-frontend:latest
         ports:
         - containerPort: 80
-
+        # Ajout d'étiquettes spécifiques pour identifier les pods frontend
+        env:
+        - name: ROLE
+          value: frontend
       - name: backend
-        image: hasindrae/autograder-backend:latest 
+        image: hasindrae/autograder-backend:latest
         ports:
         - containerPort: 8000
         env:
@@ -32,3 +35,7 @@ spec:
             secretKeyRef:
               name: backend-secrets
               key: SECRET_KEY
+        # Ajout d'étiquettes spécifiques pour identifier les pods backend
+        env:
+        - name: ROLE
+          value: backend
