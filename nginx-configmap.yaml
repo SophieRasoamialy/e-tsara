@@ -7,23 +7,29 @@ data:
     server {
       listen 80;
       
+      # Redirection HTTP vers HTTPS en production
+      if ($http_x_forwarded_proto = 'http') {
+        return 301 https://$host$request_uri;
+      }
+      
       location /api/ {
-          proxy_pass http://backend-service:8000/;
+          proxy_pass http://backend-service:8000/api;
           proxy_set_header Host $host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
           proxy_set_header X-Forwarded-Proto $scheme;
           
-          # Configuration CORS
-          add_header 'Access-Control-Allow-Origin' '*' always;
+          # Configuration CORS mise à jour
+          add_header 'Access-Control-Allow-Origin' $http_origin always;
           add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
           add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+          add_header 'Access-Control-Allow-Credentials' 'true' always;
           
-          # Gestion des requêtes préflight OPTIONS
           if ($request_method = 'OPTIONS') {
-              add_header 'Access-Control-Allow-Origin' '*';
+              add_header 'Access-Control-Allow-Origin' $http_origin;
               add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
               add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+              add_header 'Access-Control-Allow-Credentials' 'true';
               add_header 'Access-Control-Max-Age' 1728000;
               add_header 'Content-Type' 'text/plain; charset=utf-8';
               add_header 'Content-Length' 0;
