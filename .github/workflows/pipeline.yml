@@ -111,17 +111,12 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f mongo-deployment.yaml
+          kubectl apply -f nginx-configmap.yaml
           kubectl apply -f backend-deployment.yaml
           kubectl apply -f frontend-deployment.yaml
           kubectl apply -f frontend-service.yaml
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
-
-       # Déployer Ingress NGINX
-      - name: Deploy Ingress NGINX
-        run: |
-          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
-          
 
       - name: Update Kubernetes Deployment with new images
         run: |
