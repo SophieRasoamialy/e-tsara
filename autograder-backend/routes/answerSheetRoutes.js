@@ -1,6 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const AnswerSheetController = require('../controllers/AnswerSheetController');
+const authMiddleware = require('../middleware/authMiddleware');
+const multer = require('multer');
+
+// Configurer Multer pour le téléchargement de fichiers
+const storage = multer.memoryStorage(); // Stocker les fichiers en mémoire pour traitement avec AWS Textract
+const upload = multer({ storage: storage });
+
+
+// Définir la route pour l'upload et l'analyse des feuilles de réponses
+router.post('/upload-answer-sheets', upload.array('files'), AnswerSheetController.uploadAndSaveAnswerSheets);
+
+router.post('/save-edited-pdf', authMiddleware, upload.single('pdf'), AnswerSheetController.saveEditedPdf);
+
 
 /**
  * @swagger
@@ -153,6 +166,11 @@ router.get('/student/:student_id', AnswerSheetController.getAnswerSheetsByStuden
  *       '500':
  *         description: Erreur serveur
  */
-router.get('/exam/:exam_id/subject/:subject_id', AnswerSheetController.getAnswerSheetsByExamAndSubject);
+router.post('/exam/sheet-answer', AnswerSheetController.getAnswerSheetsByExam);
+
+router.post('/exam/sheet-answer/correct', AnswerSheetController.correctAnswerSheet);
+
+router.post('/corrigees', AnswerSheetController.getSheetsCorrige)
+
 
 module.exports = router;

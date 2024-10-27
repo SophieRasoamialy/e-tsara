@@ -25,8 +25,6 @@ exports.createAnswerQuestion = async (req, res) => {
   }
 };
 
-
-
 // Fonction pour obtenir une réponse par ID
 exports.getAnswerQuestionById = async (req, res) => {
   const { id } = req.params;

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ExamController = require('../controllers/ExamController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 /**
  * @swagger
@@ -194,5 +195,8 @@ router.get('/semestre/:semestre', ExamController.getExamsBySemestre);
  *                 $ref: '#/components/schemas/Exam'
  */
 router.get('/subject/:subject_id', ExamController.getExamsBySubject);
+
+
+router.get('/level/:classIds', authMiddleware, ExamController.getExamsForLevelByTeacher);
 
 module.exports = router;

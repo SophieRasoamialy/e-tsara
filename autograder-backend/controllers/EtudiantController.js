@@ -135,3 +135,33 @@ exports.searchStudents = async (req, res) => {
     res.status(500).json({ msg: 'Erreur du serveur' });
   }
 };
+
+exports.importStudentsFromJson = async (req, res) => {
+  try {
+    const data = req.body; // Les données JSON envoyées avec class_id
+
+    for (const row of data) {
+      const { matricule, name, class_id } = row;
+      console.log("matricule, name, class id", matricule, name, class_id)
+
+      // Vérifier si la classe existe
+      let existingClass = await Class.findById(class_id);
+      if (!existingClass) {
+        continue; // Passer cet étudiant si la classe n'existe pas
+      }
+
+      // Vérifier si l'étudiant existe déjà
+      let existingStudent = await Student.findOne({ matricule });
+      if (!existingStudent) {
+        // Créer l'étudiant
+        const newStudent = new Student({ matricule, name, class_id });
+        await newStudent.save();
+      }
+    }
+
+    res.status(200).json({ msg: 'Étudiants importés avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de l\'importation des étudiants:', error);
+    res.status(500).json({ msg: 'Erreur du serveur' });
+  }
+};

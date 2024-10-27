@@ -22,13 +22,11 @@ exports.createQuestion = async (req, res) => {
     });
 
     await newQuestion.save();
-    res.status(201).json({ msg: 'Question créée avec succès', newQuestion });
+    res.status(201).json({ msg: 'Question créée avec succès', questionId:newQuestion._id });
   } catch (error) {
     res.status(500).json({ msg: 'Erreur du serveur', error });
   }
 };
-
-
 
 // Fonction pour obtenir une question par ID
 exports.getQuestionById = async (req, res) => {

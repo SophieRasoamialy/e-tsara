@@ -27,7 +27,7 @@ const QuestionController = require('../controllers/QuestionController');
  *       400:
  *         description: Erreur dans la requête
  */
-router.post('/questions', QuestionController.createQuestion);
+router.post('/', QuestionController.createQuestion);
 
 /**
  * @swagger
@@ -53,7 +53,7 @@ router.post('/questions', QuestionController.createQuestion);
  *       404:
  *         description: Question non trouvée
  */
-router.get('/questions/:id', QuestionController.getQuestionById);
+router.get('/:id', QuestionController.getQuestionById);
 
 /**
  * @swagger
@@ -83,7 +83,7 @@ router.get('/questions/:id', QuestionController.getQuestionById);
  *       404:
  *         description: Question non trouvée
  */
-router.put('/questions/:id', QuestionController.updateQuestion);
+router.put('/:id', QuestionController.updateQuestion);
 
 /**
  * @swagger
@@ -105,7 +105,7 @@ router.put('/questions/:id', QuestionController.updateQuestion);
  *       404:
  *         description: Question non trouvée
  */
-router.delete('/questions/:id', QuestionController.deleteQuestion);
+router.delete('/:id', QuestionController.deleteQuestion);
 
 /**
  * @swagger
@@ -133,6 +133,6 @@ router.delete('/questions/:id', QuestionController.deleteQuestion);
  *       404:
  *         description: Aucune question trouvée pour cet examen
  */
-router.get('/questions/exam/:exam_id', QuestionController.getQuestionsByExam);
+router.get('/exam/:exam_id', QuestionController.getQuestionsByExam);
 
 module.exports = router;

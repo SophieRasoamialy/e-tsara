@@ -127,8 +127,7 @@ exports.login = async (req, res) => {
       Secure:  true, 
       SameSite: 'None', 
     });
-    
-
+    // Retourner les informations de l'utilisateur et le token JWT
     res.json({ msg: 'Connexion réussie', token, role: user.role.name });
 
   } catch (error) {

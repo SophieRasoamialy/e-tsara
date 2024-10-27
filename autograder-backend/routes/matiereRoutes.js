@@ -1,7 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const SubjectController = require('../controllers/MatiereController');
-const authMiddleware = require('../middleware/authMiddleware');
+const SubjectController = require("../controllers/MatiereController");
+const authMiddleware = require("../middleware/authMiddleware");
 
 /**
  * @swagger
@@ -29,7 +29,7 @@ const authMiddleware = require('../middleware/authMiddleware');
  *       400:
  *         description: Erreur de validation des données
  */
-router.post('/', SubjectController.createSubject);
+router.post("/", SubjectController.createSubject);
 
 /**
  * @swagger
@@ -47,19 +47,54 @@ router.post('/', SubjectController.createSubject);
  *               items:
  *                 $ref: '#/components/schemas/Subject'
  */
-router.get('/', SubjectController.getSubjects);
+router.get("/", SubjectController.getSubjects);
 
 /**
  * @swagger
- * /subjects/me:
+ * /matieres/me/classes:
  *   get:
- *     summary: Obtenir les matières enseignées par l'enseignant authentifié
+ *     summary: Obtenir les classes où l'enseignant authentifié enseigne au moins une matière
  *     tags: [Subjects]
  *     security:
- *       - bearerAuth: []
+ *       - bearerAuth: []  // Cette ligne indique que la route nécessite une authentification avec un token JWT
  *     responses:
  *       200:
- *         description: Liste des matières enseignées par l'enseignant authentifié
+ *         description: Liste des classes où l'enseignant authentifié enseigne
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Class'
+ *       401:
+ *         description: Non autorisé ou token invalide
+ *       404:
+ *         description: Aucun classe trouvée pour cet enseignant
+ */
+router.get(
+  "/me/classes",
+  authMiddleware,
+  SubjectController.getClassesForAuthenticatedTeacher
+);
+
+/**
+ * @swagger
+ * /subjects/me/classes/{class_id}:
+ *   get:
+ *     summary: Obtenir les matières enseignées par le professeur authentifié dans un niveau précis
+ *     tags: [Subjects]
+ *     security:
+ *       - bearerAuth: []  // Cette ligne indique que la route nécessite une authentification avec un token JWT
+ *     parameters:
+ *       - in: path
+ *         name: class_id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID de la classe/niveau
+ *     responses:
+ *       200:
+ *         description: Liste des matières enseignées par le professeur authentifié dans le niveau spécifié
  *         content:
  *           application/json:
  *             schema:
@@ -69,11 +104,13 @@ router.get('/', SubjectController.getSubjects);
  *       401:
  *         description: Non autorisé ou token invalide
  *       404:
- *         description: Aucun sujet trouvé pour cet enseignant
+ *         description: Aucune matière trouvée pour ce professeur dans ce niveau
  */
-
-router.get('/me', authMiddleware, SubjectController.getSubjectsForAuthenticatedTeacher);
-
+router.get(
+  "/me/:class_ids",
+  authMiddleware,
+  SubjectController.getSubjectsForAuthenticatedTeacher
+);
 
 /**
  * @swagger
@@ -100,8 +137,7 @@ router.get('/me', authMiddleware, SubjectController.getSubjectsForAuthenticatedT
  *         description: Sujet non trouvé
  */
 
-
-router.get('/:id', SubjectController.getSubjectById);
+router.get("/:id", SubjectController.getSubjectById);
 
 /**
  * @swagger
@@ -132,7 +168,7 @@ router.get('/:id', SubjectController.getSubjectById);
  *       404:
  *         description: Sujet non trouvé
  */
-router.put('/:id', SubjectController.updateSubject);
+router.put("/:id", SubjectController.updateSubject);
 
 /**
  * @swagger
@@ -154,7 +190,7 @@ router.put('/:id', SubjectController.updateSubject);
  *       404:
  *         description: Sujet non trouvé
  */
-router.delete('/:id', SubjectController.deleteSubject);
+router.delete("/:id", SubjectController.deleteSubject);
 
 /**
  * @swagger
@@ -182,7 +218,7 @@ router.delete('/:id', SubjectController.deleteSubject);
  *       404:
  *         description: Aucun sujet trouvé pour cet enseignant
  */
-router.get('/teacher/:teacher_id', SubjectController.getSubjectsByTeacher);
+router.get("/teacher/:teacher_id", SubjectController.getSubjectsByTeacher);
 
 /**
  * @swagger
@@ -210,7 +246,7 @@ router.get('/teacher/:teacher_id', SubjectController.getSubjectsByTeacher);
  *       404:
  *         description: Aucun sujet trouvé pour ce module
  */
-router.get('/module/:module_id', SubjectController.getSubjectsByModule);
+router.get("/module/:module_id", SubjectController.getSubjectsByModule);
 
 /**
  * @swagger
@@ -246,6 +282,8 @@ router.get('/module/:module_id', SubjectController.getSubjectsByModule);
  *               items:
  *                 $ref: '#/components/schemas/Subject'
  */
-router.get('/search', SubjectController.searchSubjects);
+router.get("/search", SubjectController.searchSubjects);
+
+router.get("/by-class/:classId", SubjectController.getSubjectsByClass);
 
 module.exports = router;

@@ -215,4 +215,6 @@ router.get('/class/:class_id', EtudiantController.getStudentsByClass);
  */
 router.get('/search/class/:class_id', EtudiantController.searchStudents);
 
+router.post('/import', EtudiantController.importStudentsFromJson);
+
 module.exports = router;

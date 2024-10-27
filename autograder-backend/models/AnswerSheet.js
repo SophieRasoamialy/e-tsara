@@ -13,4 +13,3 @@ const answerSheetSchema = new mongoose.Schema({
   
   const AnswerSheet = mongoose.model('AnswerSheet', answerSheetSchema);
   module.exports = AnswerSheet;
-  
