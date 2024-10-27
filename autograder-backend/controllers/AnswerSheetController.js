@@ -524,7 +524,7 @@ const correctAnswerSheet = async (req, res) => {
     const tempPdfPath = `/tmp/${answerSheetId}.pdf`;
     fs.writeFileSync(tempPdfPath, pdfBytes);
 
-    const response = await axios.post("http://localhost:5000/analyze_qcm", {
+    const response = await axios.post("http://flask-service:5000/analyze_qcm", {
       pdf_path: tempPdfPath,
       correct_answers: questionsWithAnswers
     });

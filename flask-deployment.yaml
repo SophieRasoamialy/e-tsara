@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-deployment
+  labels:
+    app: autograder
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: autograder
+      role: flask
+  template:
+    metadata:
+      labels:
+        app: autograder
+        role: flask
+    spec:
+      containers:
+      - name: flask
+        image: hasindrae/evalpdfservice:latest
+        ports:
+        - containerPort: 5000
