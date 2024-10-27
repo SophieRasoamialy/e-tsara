@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
 # Étape 3 : Créer un répertoire pour l'application
 WORKDIR /app
 
+RUN pip install --upgrade pip
+
+
 # Étape 4 : Copier les fichiers de l'application
 COPY . .
 
