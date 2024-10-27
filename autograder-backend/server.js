@@ -18,6 +18,8 @@ const notificationRoutes = require('./routes/notificationRoutes');
 
 // Configuration de la clé secrète pour JWT 
 const SECRET_KEY = process.env.SECRET_KEY;
+console.log("SECRET_KEY:", process.env.SECRET_KEY);
+
 
 const app = express();
 
@@ -37,13 +39,17 @@ app.use(session({
 
 // Configuration CORS
 app.use(cors({
-  origin: 'http://adfa5bdfdda4b41f6962d68719fb3793-1551523519.us-east-1.elb.amazonaws.com', 
+  origin: ['http://aa9f801d060524c66a2242d52a622775-752593576.us-east-1.elb.amazonaws.com', 'http://localhost:3000'], 
   credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
+app.options('*', cors()); // Préparer le backend à répondre aux requêtes CORS OPTIONS
+
+
 app.use(cookieParser());
+
 console.log("mongo uri", process.env.MONGO_URI)
 // Connexion à MongoDB
 mongoose.connect(process.env.MONGO_URI, {
@@ -58,6 +64,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Utilisation des routes utilisateur
+app.get('/api', (req, res) => {
+  res.json({ message: 'API is running' });
+});
+
 app.use('/api/users', userRoutes);
 app.use('/api/classes', niveauRoutes);
 app.use('/api/etudiants', etudiantRoutes);
@@ -84,6 +94,6 @@ app.use((err, req, res, next) => {
 
 // Démarrer le serveur
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0',  () => {
   console.log(`Server running on port ${PORT}`);
 });

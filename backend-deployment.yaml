@@ -1,29 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: autograder-deployment
+  name: backend-deployment
   labels:
     app: autograder
 spec:
-  replicas: 2  # Nombre de réplicas pour le backend et le frontend
+  replicas: 2
   selector:
     matchLabels:
       app: autograder
+      role: backend
   template:
     metadata:
       labels:
         app: autograder
+        role: backend
     spec:
       containers:
-      - name: frontend
-        image: hasindrae/autograder-frontend:latest
-        ports:
-        - containerPort: 80
-
       - name: backend
-        image: hasindrae/autograder-backend:latest 
+        image: hasindrae/autograder-backend:latest
         ports:
         - containerPort: 8000
         env:
         - name: MONGO_URI
           value: mongodb://mongo-db:27017/autograderDB
+        - name: SECRET_KEY
+          value: YrG4d72V66jhSW5jbxpW34tUBfdtKGhR84uHtR33WfXq696V93
+        - name: ROLE
+          value: backend

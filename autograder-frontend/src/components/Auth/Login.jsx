@@ -29,8 +29,10 @@ const Login = () => {
   });
 
   const onSubmit = async (data) => {
+    console.log('Sending request to:', '/api/users/login');
+      console.log('Request data:', data);
     try {
-      const response = await fetch("http://localhost:8000/api/users/login", {
+      const response = await fetch("/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,8 +45,8 @@ const Login = () => {
         // Stocker le token dans les cookies avec SameSite et Secure pour éviter les avertissements du navigateur
         Cookies.set("token", result.token, {
           expires: 1,
-          sameSite: "None",
-          secure: true,
+          sameSite: "Lax",
+          secure: false,
         });
         const storageToken = Cookies.get("token");
         if (storageToken) {
@@ -61,7 +63,7 @@ const Login = () => {
         alert("Login failed: " + errorData.msg);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Fetch error:', error);
     }
   };
 

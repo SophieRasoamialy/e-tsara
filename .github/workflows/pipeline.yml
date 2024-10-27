@@ -111,15 +111,17 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f mongo-deployment.yaml
-          kubectl apply -f deployment.yaml
+          kubectl apply -f nginx-configmap.yaml
+          kubectl apply -f backend-deployment.yaml
+          kubectl apply -f frontend-deployment.yaml
           kubectl apply -f frontend-service.yaml
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
-          
 
       - name: Update Kubernetes Deployment with new images
         run: |
-          kubectl set image deployment/autograder-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }} backend=hasindrae/autograder-backend:${{ github.sha }}
+          kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }}
+          kubectl set image deployment/backend-deployment backend=hasindrae/autograder-backend:${{ github.sha }}
 
 
       - name: Check Pods Status
