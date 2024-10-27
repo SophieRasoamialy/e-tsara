@@ -26,6 +26,7 @@ services:
       - MONGO_URI=mongodb://mongo:27017/autograderDB  # URI de connexion à MongoDB avec identifiants
     depends_on:
       - mongo  # Assure que MongoDB démarre avant le backend
+      - flask # Assure que Flask démarre avant le backend
     networks:
       - app-network  # Connecte le backend au réseau
 
@@ -51,6 +52,16 @@ services:
       - mongo  # Assure que MongoDB est démarré avant le seed
     networks:
       - app-network  # Connecte le seed au réseau
+  # Service pour l'application Flask
+  flask:
+    build:
+      context: ./evalPDFService  
+      dockerfile: Dockerfile  # Spécifie le Dockerfile pour Flask
+    image: custom/flask-app:latest
+    ports:
+      - "5000:5000"  # Mappe le port 5000 du conteneur au port 5000 de la machine hôte
+    networks:
+      - app-network  # Connecte Flask au réseau
 
 # Déclaration du réseau pour la communication entre les services
 networks:

@@ -45,6 +45,7 @@ jobs:
           IMAGE_VERSION=${{ github.sha }}
           docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
           docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION}
+          docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
 
       - name: Verify Docker images
         run: docker images
@@ -60,6 +61,10 @@ jobs:
       # Push Frontend to Docker Hub  
       - name: Push Frontend to Docker Hub
         run: docker push hasindrae/autograder-frontend:${{ github.sha }}
+
+       # Push Flask to Docker Hub  
+      - name: Push Flask to Docker Hub
+        run: docker push hasindrae/evalpdfservice:${{ github.sha }}
 
       - name: Install AWS CLI
         run: |
@@ -114,9 +119,11 @@ jobs:
           kubectl apply -f nginx-configmap.yaml
           kubectl apply -f backend-deployment.yaml
           kubectl apply -f frontend-deployment.yaml
+          kubectl apply -f flask-deployment.yaml
           kubectl apply -f frontend-service.yaml
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
+          kubectl apply -f flask-service.yaml
 
       - name: Update Kubernetes Deployment with new images
         run: |
