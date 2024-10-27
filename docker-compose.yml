@@ -57,7 +57,7 @@ services:
     build:
       context: ./evalPDFService  
       dockerfile: Dockerfile  # Spécifie le Dockerfile pour Flask
-    image: custom/flask-app:latest
+    image: hasindrae/evalpdfservice:latest
     ports:
       - "5000:5000"  # Mappe le port 5000 du conteneur au port 5000 de la machine hôte
     networks:
