@@ -45,8 +45,8 @@ const Login = () => {
         // Stocker le token dans les cookies avec SameSite et Secure pour éviter les avertissements du navigateur
         Cookies.set("token", result.token, {
           expires: 1,
-          sameSite: "Lax",
-          secure: false,
+          sameSite: "None",
+          secure: true,
         });
         const storageToken = Cookies.get("token");
         if (storageToken) {
