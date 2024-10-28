@@ -48,7 +48,7 @@
   },
   "scripts": {
     "start": "react-dotenv && react-scripts start",
-    "build": "rreact-dotenv && eact-scripts build",
+    "build": "react-dotenv && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
