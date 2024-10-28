@@ -46,7 +46,7 @@ const Login = () => {
         Cookies.set("token", result.token, {
           expires: 1,
           sameSite: "None",
-          secure: true,
+          secure: false,
         });
         const storageToken = Cookies.get("token");
         if (storageToken) {
