@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaTimes } from "react-icons/fa";
+import env from "react-dotenv";
 
 function SubjectModal({ isOpen, onClose, moduleId, selectedSubject, fetchSubjects }) {
   const [name, setName] = useState("");
   const [coeff, setCoeff] = useState("");
   const [professorId, setProfessorId] = useState("");
   const [professors, setProfessors] = useState([]);
+
+  const apiUrl = env.API_URL || "";
   
   useEffect(() => {
     if (selectedSubject) {
@@ -23,7 +26,7 @@ function SubjectModal({ isOpen, onClose, moduleId, selectedSubject, fetchSubject
   useEffect(() => {
     const fetchProfessors = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/users/role/66b44551ac5a7298232da495"); // URL modifiée pour correspondre à votre API
+        const response = await axios.get(`${apiUrl}/api/users/role/66b44551ac5a7298232da495`); // URL modifiée pour correspondre à votre API
         setProfessors(response.data);
       } catch (error) {
         console.error("Erreur lors de la récupération des professeurs:", error);
@@ -39,10 +42,10 @@ function SubjectModal({ isOpen, onClose, moduleId, selectedSubject, fetchSubject
       const subjectData = { name, coeff, teacher_id: professorId, module_id: moduleId };
       if (selectedSubject) {
         // Update existing subject
-        await axios.put(`http://localhost:8000/api/matieres/${selectedSubject._id}`, subjectData);
+        await axios.put(`${apiUrl}/api/matieres/${selectedSubject._id}`, subjectData);
       } else {
         // Add new subject
-        await axios.post("http://localhost:8000/api/matieres", subjectData);
+        await axios.post(`${apiUrl}/api/matieres`, subjectData);
       }
       fetchSubjects(); // Refresh the subject list after adding/updating
       onClose(); // Close the modal

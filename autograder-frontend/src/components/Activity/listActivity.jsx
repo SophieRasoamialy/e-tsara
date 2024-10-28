@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
+import env from "react-dotenv";
 
 function AdminActivityPage() {
   const [activities, setActivities] = useState([]);
+  const apiUrl = env.API_URL || "";
 
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/activities');
+        const response = await axios.get(`${apiUrl}/api/activities`);
         setActivities(response.data);
       } catch (error) {
         console.error('Erreur lors de la récupération des activités:', error);

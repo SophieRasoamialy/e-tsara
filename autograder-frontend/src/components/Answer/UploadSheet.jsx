@@ -6,6 +6,7 @@ import { UploadIcon } from "lucide-react";
 import { FaArrowLeft, FaSpinner } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
+import env from "react-dotenv";
 
 // Styles réutilisables
 const commonInputClasses =
@@ -28,12 +29,14 @@ const UploadCopy = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false); // État pour le spinner
 
+  const apiUrl = env.API_URL || "";
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const classeResponse = await axios.get(
-          "http://localhost:8000/api/classes"
+          `${apiUrl}/api/classes`
         );
         setClasses(classeResponse.data);
       } catch (error) {
@@ -47,7 +50,7 @@ const UploadCopy = () => {
   const fetchSubjects = async (levelId) => {
     try {
       const matiereResponse = await axios.get(
-        `http://localhost:8000/api/matieres/by-class/${levelId}`
+        `${apiUrl}/api/matieres/by-class/${levelId}`
       );
       setMatieres(matiereResponse.data);
     } catch (error) {
@@ -83,7 +86,7 @@ const UploadCopy = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/feuilles-reponses/upload-answer-sheets",
+        `${apiUrl}/api/feuilles-reponses/upload-answer-sheets`,
         formData,
         {
           headers: {

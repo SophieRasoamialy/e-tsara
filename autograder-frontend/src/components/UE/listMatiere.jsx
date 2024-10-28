@@ -3,11 +3,14 @@ import axios from "axios";
 import { FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
 import SubjectModal from "./matiereModal";
+import env from "react-dotenv";
 
 function ListMatiere({ module }) {
   const [subjects, setSubjects] = useState([]);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
+
+  const apiUrl = env.API_URL || "";
 
   // Fetch subjects when the module changes
   useEffect(() => {
@@ -17,7 +20,7 @@ function ListMatiere({ module }) {
   const fetchSubjects = async (moduleId) => {
     try {
       const response = await axios.get(
-        `http://localhost:8000/api/matieres/module/${moduleId}`
+        `${apiUrl}/api/matieres/module/${moduleId}`
       );
       setSubjects(response.data);
     } catch (error) {
@@ -48,7 +51,7 @@ function ListMatiere({ module }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`http://localhost:8000/api/matieres/${id}`);
+          await axios.delete(`${apiUrl}/api/matieres/${id}`);
           fetchSubjects(module._id); // Refetch subjects with current module
           Swal.fire("Supprimé !", "La matière a été supprimée.", "success");
         } catch (error) {

@@ -5,6 +5,7 @@ import { FaSearch, FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
 import ModuleModal from "./moduleModal";
 import ListMatiere from "./listMatiere";
+import env from "react-dotenv";
 
 function ListModule() {
   const [modules, setModules] = useState([]);
@@ -15,15 +16,17 @@ function ListModule() {
   const [selectedModule, setSelectedModule] = useState(null);
   const [showSubjects, setShowSubjects] = useState(false);
 
+  const apiUrl = env.API_URL || "";
+
   // Fetch levels and modules from the server
   const fetchData = async (classId = "") => {
     try {
       const modulesUrl = classId
-        ? `http://localhost:8000/api/modules/class/${classId}`
-        : "http://localhost:8000/api/modules";
+        ? `${apiUrl}/api/modules/class/${classId}`
+        : `${apiUrl}/api/modules`;
 
       const [levelsRes, modulesRes] = await Promise.all([
-        axios.get("http://localhost:8000/api/classes"),
+        axios.get(`${apiUrl}/api/classes`),
         axios.get(modulesUrl),
       ]);
       setLevels(levelsRes.data);
@@ -65,7 +68,7 @@ function ListModule() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`http://localhost:8000/api/modules/${id}`);
+          await axios.delete(`${apiUrl}/api/modules/${id}`);
           fetchData(selectedLevel); // Refetch modules with current level filter
           Swal.fire("Supprimé !", "Le module a été supprimé.", "success");
         } catch (error) {

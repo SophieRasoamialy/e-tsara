@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { FaTimes } from "react-icons/fa";
 import { Editor } from "@tinymce/tinymce-react";
+import env from "react-dotenv";
 
 const CreateExam = () => {
   const [subject, setSubject] = useState("");
@@ -29,6 +30,8 @@ const CreateExam = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const apiUrl = env.API_URL || "";
+
   // Fonction pour récupérer les matières
   const fetchSubjects = async (levelIds) => {
     try {
@@ -36,7 +39,7 @@ const CreateExam = () => {
       setNoSubjects(false);
       const token = Cookies.get("token");
       const response = await axios.get(
-        `http://localhost:8000/api/matieres/me/${levelIds.join(",")}`,
+        `${apiUrl}/api/matieres/me/${levelIds.join(",")}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -64,7 +67,7 @@ const CreateExam = () => {
     try {
       const token = Cookies.get("token");
       const response = await axios.get(
-        "http://localhost:8000/api/matieres/me/classes",
+        `${apiUrl}/api/matieres/me/classes`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -145,7 +148,7 @@ const CreateExam = () => {
       }
 
       // Créer l'examen
-      const examResponse = await axios.post("http://localhost:8000/api/exams", {
+      const examResponse = await axios.post(`${apiUrl}/api/exams`, {
         session,
         semestre,
         titre,
@@ -159,7 +162,7 @@ const CreateExam = () => {
       // Parcourir les questions et les créer
       for (const question of questions) {
         const questionResponse = await axios.post(
-          "http://localhost:8000/api/questions",
+          `${apiUrl}/api/questions`,
           {
             exam_id: examId,
             text: question.text,
@@ -172,7 +175,7 @@ const CreateExam = () => {
         const questionId = questionResponse.data.questionId;
 
         // Créer la réponse associée
-        await axios.post("http://localhost:8000/api/reponses", {
+        await axios.post(`${apiUrl}/api/reponses`, {
           question_id: questionId,
           answer: question.answer,
         });

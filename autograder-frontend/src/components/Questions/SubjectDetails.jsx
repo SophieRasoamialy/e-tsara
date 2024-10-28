@@ -11,6 +11,7 @@ import {
   FaDownload,
 } from "react-icons/fa";
 import "./print.css";
+import env from "react-dotenv";
 
 const SubjectDetails = () => {
   const { id } = useParams();
@@ -19,12 +20,14 @@ const SubjectDetails = () => {
   const [questions, setQuestions] = useState(null);
   const [showAnswers, setShowAnswers] = useState(false);
 
+  const apiUrl = env.API_URL || "";
+
   // Utiliser useEffect pour récupérer les données de l'API au montage du composant
   useEffect(() => {
     const fetchExamDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/exams/${id}`
+          `${apiUrl}/api/exams/${id}`
         );
         setSubject(response.data.exam.subject_id);
         setExam(response.data.exam);

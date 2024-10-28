@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import env from "react-dotenv";
 
 const schema = z.object({
   email: z
@@ -27,9 +28,11 @@ const Login = () => {
   } = useForm({
     resolver: zodResolver(schema),
   });
+  
+  const apiUrl = env.API_URL || "";
 
   const onSubmit = async (data) => {
-    console.log('Sending request to:', '/api/users/login');
+    console.log('Sending request to:', `${apiUrl}/api/users/login`);
       console.log('Request data:', data);
     try {
       const response = await fetch("/api/users/login", {
