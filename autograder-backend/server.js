@@ -29,9 +29,9 @@ app.use(session({
   resave: false,                  // Ne pas enregistrer la session si elle n'a pas été modifiée
   saveUninitialized: false,       // Ne pas créer de session jusqu'à ce qu'elle soit modifiée
   cookie: {
-    secure: true,                 // Le cookie doit être envoyé uniquement sur HTTPS
+    secure: false,                 // Le cookie doit être envoyé uniquement sur HTTPS
     httpOnly: true,               // Le cookie n'est pas accessible par JavaScript côté client
-    sameSite: 'Lax',              // L'option Lax est généralement plus sûre pour les cookies
+    sameSite: 'None',              // L'option Lax est généralement plus sûre pour les cookies
     maxAge: 24 * 60 * 60 * 1000   // Durée de vie du cookie (ex. 24 heures)
   }
 }));
@@ -39,7 +39,7 @@ app.use(session({
 
 // Configuration CORS
 app.use(cors({
-  origin: ['http://aa9f801d060524c66a2242d52a622775-752593576.us-east-1.elb.amazonaws.com ', 'http://localhost:3000'], 
+  origin: ['http://a4b2696f445ed4670bb008c63094dfdb-1391641278.us-east-1.elb.amazonaws.com', 'http://localhost:3000'], 
   credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
@@ -50,7 +50,11 @@ app.options('*', cors()); // Préparer le backend à répondre aux requêtes COR
 
 app.use(cookieParser());
 
-console.log("mongo uri", process.env.MONGO_URI)
+app.use((req, res, next) => {
+  console.log('Origin:', req.headers.origin);
+  next();
+});
+
 // Connexion à MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,

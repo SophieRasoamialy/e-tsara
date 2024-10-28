@@ -20,13 +20,13 @@ data:
           proxy_set_header X-Forwarded-Proto $scheme;
           
           # Configuration CORS mise à jour
-          add_header 'Access-Control-Allow-Origin' $http_origin always;
+          add_header 'Access-Control-Allow-Origin' 'http://a4b2696f445ed4670bb008c63094dfdb-1391641278.us-east-1.elb.amazonaws.com' always;
           add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
           add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
           add_header 'Access-Control-Allow-Credentials' 'true' always;
           
           if ($request_method = 'OPTIONS') {
-              add_header 'Access-Control-Allow-Origin' $http_origin;
+              add_header 'Access-Control-Allow-Origin' 'http://a4b2696f445ed4670bb008c63094dfdb-1391641278.us-east-1.elb.amazonaws.com';
               add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
               add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
               add_header 'Access-Control-Allow-Credentials' 'true';
