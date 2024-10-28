@@ -9,6 +9,7 @@ import MySwal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 import ReactPaginate from "react-paginate";
 import { ChevronLeftCircle, ChevronRightCircle } from "lucide-react";
+import env from "react-dotenv";
 
 // Styles réutilisables
 const commonInputClasses =
@@ -34,12 +35,14 @@ const ListCopy = () => {
   const pdfPerPage = 9; // Nombre de PDFs par page
 
   const navigate = useNavigate();
+  const apiUrl = env.API_URL || "";
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const classeResponse = await axios.get(
-          "http://localhost:8000/api/classes"
+          `${apiUrl}/api/classes`
         );
         setClasses(classeResponse.data);
       } catch (error) {
@@ -53,7 +56,7 @@ const ListCopy = () => {
   const fetchSubjects = async (levelId) => {
     try {
       const matiereResponse = await axios.get(
-        `http://localhost:8000/api/matieres/by-class/${levelId}`
+        `${apiUrl}/api/matieres/by-class/${levelId}`
       );
       setMatieres(matiereResponse.data);
     } catch (error) {
@@ -70,7 +73,7 @@ const ListCopy = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "http://localhost:8000/api/feuilles-reponses/exam/sheet-answer",
+        `${apiUrl}/api/feuilles-reponses/exam/sheet-answer`,
         {
           method: "POST",
           headers: {
@@ -118,7 +121,7 @@ const ListCopy = () => {
       for (let i = 0; i < pdfUrls.length; i++) {
         const pdf = pdfUrls[i];
         await fetch(
-          "http://localhost:8000/api/feuilles-reponses/exam/sheet-answer/correct",
+          `${apiUrl}/api/feuilles-reponses/exam/sheet-answer/correct`,
           {
             method: "POST",
             headers: {

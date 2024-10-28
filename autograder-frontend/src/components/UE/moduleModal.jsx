@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { FaTimes } from "react-icons/fa";
+import env from "react-dotenv";
 
 function ModuleModal({ isOpen, onClose, selectedModule, fetchModules }) {
   const [name, setName] = useState("");
@@ -9,10 +10,12 @@ function ModuleModal({ isOpen, onClose, selectedModule, fetchModules }) {
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [levels, setLevels] = useState([]);
 
+  const apiUrl = env.API_URL || "";
+
   useEffect(() => {
     const fetchLevels = async () => {
       try {
-        const res = await axios.get("http://localhost:8000/api/classes");
+        const res = await axios.get(`${apiUrl}/api/classes`);
         setLevels(res.data);
       } catch (error) {
         console.error("Erreur lors de la récupération des niveaux:", error);
@@ -38,10 +41,10 @@ function ModuleModal({ isOpen, onClose, selectedModule, fetchModules }) {
 
     try {
       if (selectedModule) {
-        await axios.put(`http://localhost:8000/api/modules/${selectedModule._id}`, moduleData);
+        await axios.put(`${apiUrl}/api/modules/${selectedModule._id}`, moduleData);
         Swal.fire("Modifié !", "Le module a été modifié.", "success");
       } else {
-        await axios.post("http://localhost:8000/api/modules", moduleData);
+        await axios.post(`${apiUrl}/api/modules`, moduleData);
         Swal.fire("Créé !", "Le module a été créé.", "success");
       }
       fetchModules();

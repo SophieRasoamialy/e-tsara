@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import env from "react-dotenv";
 
 function StudentModal({ isOpen, onClose, selectedStudent, fetchStudents }) {
   const [matricule, setMatricule] = useState("");
   const [name, setName] = useState("");
   const [classId, setClassId] = useState("");
+
+  const apiUrl = env.API_URL || "";
 
   useEffect(() => {
     if (selectedStudent) {
@@ -23,10 +26,10 @@ function StudentModal({ isOpen, onClose, selectedStudent, fetchStudents }) {
     try {
       if (selectedStudent) {
         // Mise à jour de l'étudiant
-        await axios.put(`http://localhost:8000/api/etudiants/${selectedStudent._id}`, { matricule, name, class_id: classId });
+        await axios.put(`${apiUrl}/api/etudiants/${selectedStudent._id}`, { matricule, name, class_id: classId });
       } else {
         // Création d'un nouvel étudiant
-        await axios.post("http://localhost:8000/api/etudiants", { matricule, name, class_id: classId });
+        await axios.post(`${apiUrl}/api/etudiants`, { matricule, name, class_id: classId });
       }
       fetchStudents();
       onClose();

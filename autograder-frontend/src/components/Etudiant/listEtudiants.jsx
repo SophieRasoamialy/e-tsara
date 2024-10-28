@@ -8,6 +8,7 @@ import DetailEtudiant from "./detailEtudiant";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import env from "react-dotenv";
 
 function ListEtudiant() {
   const [etudiants, setEtudiants] = useState([]);
@@ -19,15 +20,17 @@ function ListEtudiant() {
   const [showDetails, setShowDetails] = useState(false);
   const [file, setFile] = useState(null);
 
+  const apiUrl = env.API_URL || "";
+
   // Fetch classes and students from the server
   const fetchData = async (classId = "") => {
     try {
       const etudiantsUrl = classId
-        ? `http://localhost:8000/api/etudiants/class/${classId}`
-        : "http://localhost:8000/api/etudiants";
+        ? `${apiUrl}/api/etudiants/class/${classId}`
+        : `${apiUrl}/api/etudiants`;
 
       const [classesRes, etudiantsRes] = await Promise.all([
-        axios.get("http://localhost:8000/api/classes"),
+        axios.get(`${apiUrl}/api/classes`),
         axios.get(etudiantsUrl),
       ]);
       setClasses(classesRes.data);
@@ -71,7 +74,7 @@ function ListEtudiant() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`http://localhost:8000/api/etudiants/${id}`);
+          await axios.delete(`${apiUrl}/api/etudiants/${id}`);
           fetchData(selectedClass); // Refetch students with current class filter
           Swal.fire("Supprimé !", "L'étudiant a été supprimé.", "success");
         } catch (error) {
@@ -140,7 +143,7 @@ function ListEtudiant() {
 
       try {
         await axios.post(
-          "http://localhost:8000/api/etudiants/import",
+          `${apiUrl}/api/etudiants/import`,
           studentsWithClass
         );
         fetchData(selectedClass); // Refetch students with current class filter

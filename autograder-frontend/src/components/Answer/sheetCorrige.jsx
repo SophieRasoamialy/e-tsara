@@ -17,6 +17,7 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 import EditablePdfViewer from "./editSheet";
+import env from "react-dotenv";
 
 const PageFeuillesCorrigees = () => {
   const [pdfUrls, setPdfUrls] = useState([]);
@@ -34,6 +35,7 @@ const PageFeuillesCorrigees = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   const location = useLocation();
+  const apiUrl = env.API_URL || "";
 
   useEffect(() => {
     const state = location.state || {};
@@ -41,7 +43,7 @@ const PageFeuillesCorrigees = () => {
     const fetchData = async () => {
       try {
         const classeResponse = await axios.get(
-          "http://localhost:8000/api/classes"
+          `${apiUrl}/api/classes`
         );
         setClasses(classeResponse.data);
       } catch (error) {
@@ -70,7 +72,7 @@ const PageFeuillesCorrigees = () => {
   const fetchSubjects = async (levelId) => {
     try {
       const matiereResponse = await axios.get(
-        `http://localhost:8000/api/matieres/by-class/${levelId}`
+        `${apiUrl}/api/matieres/by-class/${levelId}`
       );
       setMatieres(matiereResponse.data);
     } catch (error) {
@@ -93,7 +95,7 @@ const PageFeuillesCorrigees = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "http://localhost:8000/api/feuilles-reponses/corrigees",
+        `${apiUrl}/api/feuilles-reponses/corrigees`,
         {
           method: "POST",
           headers: {
@@ -180,7 +182,7 @@ const PageFeuillesCorrigees = () => {
     const token = Cookies.get("token");
 
     try {
-      await axios.post("http://localhost:8000/api/feuilles-reponses/save-edited-pdf", formData, {
+      await axios.post(`${apiUrl}/api/feuilles-reponses/save-edited-pdf`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,

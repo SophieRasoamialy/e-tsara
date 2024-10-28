@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Cookies from "js-cookie";
 import axios from "axios";
+import env from "react-dotenv";
 
 const SubjectList = () => {
   const [levels, setLevels] = useState([]);
@@ -11,6 +12,8 @@ const SubjectList = () => {
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [noSubjects, setNoSubjects] = useState(false);
   const navigate = useNavigate();
+
+  const apiUrl = env.API_URL || "";
 
   useEffect(() => {
     fetchLevels();
@@ -25,7 +28,7 @@ const SubjectList = () => {
     try {
       const token = Cookies.get("token");
       const response = await axios.get(
-        "http://localhost:8000/api/matieres/me/classes",
+        `${apiUrl}/api/matieres/me/classes`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -47,7 +50,7 @@ const SubjectList = () => {
     try {
       const token = Cookies.get("token");
       const response = await axios.get(
-        `http://localhost:8000/api/exams/level/${levelIds.join(",")}`,
+        `${apiUrl}/api/exams/level/${levelIds.join(",")}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

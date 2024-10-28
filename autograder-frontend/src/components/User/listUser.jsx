@@ -4,6 +4,7 @@ import UserModal from "./userModal";
 import Sidebar from "../components/Sidebar";
 import { FaSearch, FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
+import env from "react-dotenv";
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -13,12 +14,14 @@ function UserList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  const apiUrl = env.API_URL || "";
+
   // Fetch users from the server
   const fetchData = async (role = "") => {
     try {
       const usersUrl = role
-        ? `http://localhost:8000/api/users/role/${role}`
-        : "http://localhost:8000/api/users";
+        ? `${apiUrl}/api/users/role/${role}`
+        : `${apiUrl}/api/users`;
 
       const usersRes = await axios.get(usersUrl);
       setUsers(usersRes.data);
@@ -30,7 +33,7 @@ function UserList() {
   // Fetch roles from the server
   const fetchRoles = async () => {
     try {
-      const rolesRes = await axios.get("http://localhost:8000/api/users/roles");
+      const rolesRes = await axios.get(`${apiUrl}/api/users/roles`);
       setRoles(rolesRes.data); 
     } catch (error) {
       console.error("Erreur lors de la récupération des rôles:", error);
@@ -79,7 +82,7 @@ useEffect(() => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`http://localhost:8000/api/users/user/${id}`);
+          await axios.delete(`${apiUrl}/api/users/user/${id}`);
           fetchData(selectedRole); // Refetch users with current role filter
           Swal.fire("Supprimé !", "L'utilisateur a été supprimé.", "success");
         } catch (error) {

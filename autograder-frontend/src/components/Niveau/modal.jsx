@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import env from "react-dotenv";
 
 function Modal({ isOpen, onClose, selectedClass, fetchClasses }) {
   const [name, setName] = useState("");
+
+  const apiUrl = env.API_URL || "";
 
   useEffect(() => {
     if (selectedClass) {
@@ -16,9 +19,9 @@ function Modal({ isOpen, onClose, selectedClass, fetchClasses }) {
     event.preventDefault();
     try {
       if (selectedClass) {
-        await axios.put(`http://localhost:8000/api/classes/${selectedClass._id}`, { name });
+        await axios.put(`${apiUrl}/api/classes/${selectedClass._id}`, { name });
       } else {
-        await axios.post("http://localhost:8000/api/classes", { name });
+        await axios.post(`${apiUrl}/api/classes`, { name });
       }
       fetchClasses();
       onClose();

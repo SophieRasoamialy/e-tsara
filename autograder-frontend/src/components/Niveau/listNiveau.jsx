@@ -4,6 +4,7 @@ import Modal from "./modal";
 import Sidebar from "../components/Sidebar";
 import { FaSearch, FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
+import env from "react-dotenv";
 
 function ListNiveau() {
   const [classes, setClasses] = useState([]);
@@ -11,9 +12,11 @@ function ListNiveau() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
 
+  const apiUrl = env.API_URL || "";
+
   const fetchClasses = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/api/classes");
+      const res = await axios.get(`${apiUrl}/api/classes`);
       setClasses(res.data);
     } catch (error) {
       console.error("Erreur lors de la récupération des classes:", error);
@@ -27,7 +30,7 @@ function ListNiveau() {
     } else {
       try {
         const res = await axios.get(
-          `http://localhost:8000/api/classes/search/name?query=${event.target.value}`
+          `${apiUrl}/api/classes/search/name?query=${event.target.value}`
         );
         setClasses(res.data);
       } catch (error) {
@@ -49,7 +52,7 @@ function ListNiveau() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`http://localhost:8000/api/classes/${id}`);
+          await axios.delete(`${apiUrl}/api/classes/${id}`);
           fetchClasses();
           Swal.fire(
             'Supprimé !',

@@ -5,6 +5,7 @@ import { FaEyeSlash, FaEye } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import env from "react-dotenv";
 
 const schema = z.object({
   email: z.string().email({ message: "Format d'email invalide" }).min(1, { message: "L'email est requis" }),
@@ -20,6 +21,8 @@ function UserModal({ isOpen, onClose, selectedUser, fetchUsers }) {
   const [roles, setRoles] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
 
+  const apiUrl = env.API_URL || "";
+
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema)
   });
@@ -27,7 +30,7 @@ function UserModal({ isOpen, onClose, selectedUser, fetchUsers }) {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const res = await axios.get("http://localhost:8000/api/users/roles");
+        const res = await axios.get(`${apiUrl}/api/users/roles`);
         setRoles(res.data);
       } catch (error) {
         console.error("Erreur lors de la récupération des rôles:", error);
@@ -50,10 +53,10 @@ function UserModal({ isOpen, onClose, selectedUser, fetchUsers }) {
     console.log("data",data);
     try {
       if (selectedUser) {
-        await axios.put(`http://localhost:8000/api/users/user/${selectedUser._id}`, data);
+        await axios.put(`${apiUrl}/api/users/user/${selectedUser._id}`, data);
         Swal.fire("Modifié !", "L'utilisateur a été modifié.", "success");
       } else {
-        await axios.post("http://localhost:8000/api/users/register", data);
+        await axios.post(`${apiUrl}/api/users/register`, data);
         Swal.fire("Créé !", "L'utilisateur a été créé.", "success");
       }
       fetchUsers();
