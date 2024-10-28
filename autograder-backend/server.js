@@ -31,7 +31,7 @@ app.use(session({
   cookie: {
     secure: false,                 // Le cookie doit être envoyé uniquement sur HTTPS
     httpOnly: true,               // Le cookie n'est pas accessible par JavaScript côté client
-    sameSite: 'None',              // L'option Lax est généralement plus sûre pour les cookies
+    sameSite: 'Lax',              // L'option Lax est généralement plus sûre pour les cookies
     maxAge: 24 * 60 * 60 * 1000   // Durée de vie du cookie (ex. 24 heures)
   }
 }));
