@@ -21,62 +21,28 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.10.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-
-      # Backend dependencies
-      - name: Install Backend Dependencies
-        run: npm ci
-        working-directory: ./autograder-backend
-
-      # Frontend dependencies
-      - name: Install Frontend Dependencies
-        run: npm ci
-        working-directory: ./autograder-frontend
-
-      # Build Docker images
-      - name: Build Docker images
-        
-        run: |
-          docker-compose build
-          # Utiliser le SHA du commit pour taguer l'image
-          IMAGE_VERSION=${{ github.sha }}
-          docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
-          docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION}
-          docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
-
-      - name: Verify Docker images
-        run: docker images
-
-      # Log in to Docker Hub
+      # Log in to Docker Hub avant le build
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # Push Backend to Docker Hub  
-      - name: Push Backend to Docker Hub
-        run: docker push hasindrae/autograder-backend:${{ github.sha }}
-
-      # Push Frontend to Docker Hub  
-      - name: Push Frontend to Docker Hub
-        run: docker push hasindrae/autograder-frontend:${{ github.sha }}
-
-       # Push Flask to Docker Hub  
-      - name: Push Flask to Docker Hub
-        run: docker push hasindrae/evalpdfservice:${{ github.sha }}
+      # Build et push des images Docker en une seule étape
+      - name: Build and Push Docker images
+        run: |
+          IMAGE_VERSION=${{ github.sha }}
+          docker-compose build
+          docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
+          docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION}
+          docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
+          
+          docker push hasindrae/autograder-backend:${IMAGE_VERSION}
+          docker push hasindrae/autograder-frontend:${IMAGE_VERSION}
+          docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
 
       - name: Install AWS CLI
         run: |
-            sudo apt-get update
-            sudo apt-get install -y unzip
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
             sudo ./aws/install --update
-
-      # Vérifier l'installation
-      - name: Verify AWS CLI installation
-        run: aws --version
 
       - name: Configure AWS CLI
         run: |
@@ -90,29 +56,21 @@ jobs:
           sudo mv /tmp/eksctl /usr/local/bin
 
       - name: Update kubeconfig
-        run: |
-          aws eks update-kubeconfig --name autograder
+        run: aws eks update-kubeconfig --name autograder
 
-      - name: Vérifier si le PV existe
-        id: check_pv
+      # Vérification et création des ressources de stockage si nécessaire
+      - name: Check and Create Storage Resources
         run: |
-            kubectl get pv host-pv || echo "PV missing"
-  
-      - name: Appliquer le PV si manquant
-        if: steps.check_pv.outputs.pv_missing
-        run: kubectl apply -f host-pv.yaml
-  
-      - name: Vérifier si le PVC existe
-        id: check_pvc
-        run: |
-            kubectl get pvc host-pvc || echo "PVC missing"
-  
-      - name: Appliquer le PVC si manquant
-        if: steps.check_pvc.outputs.pvc_missing
-        run: |
-          kubectl apply -f host-pvc.yaml
-          kubectl wait --for=condition=Bound pvc/mongo-pvc --timeout=60s
+          if ! kubectl get pv host-pv &>/dev/null; then
+            kubectl apply -f host-pv.yaml
+          fi
+          
+          if ! kubectl get pvc host-pvc &>/dev/null; then
+            kubectl apply -f host-pvc.yaml
+            kubectl wait --for=condition=Bound pvc/mongo-pvc --timeout=60s
+          fi
 
+      # Déploiement Kubernetes
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f mongo-deployment.yaml
@@ -125,15 +83,14 @@ jobs:
           kubectl apply -f mongo-service.yaml
           kubectl apply -f flask-service.yaml
 
-      - name: Update Kubernetes Deployment with new images
+      - name: Update Deployments with new images
         run: |
           kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }}
           kubectl set image deployment/backend-deployment backend=hasindrae/autograder-backend:${{ github.sha }}
+          kubectl set image deployment/flask-deployment flask=hasindrae/evalpdfservice:${{ github.sha }}
 
-
-      - name: Check Pods Status
-        run: kubectl get pods
-
-      - name: Get logs for debugging
-        if: failure()
-        run: kubectl logs -l app=autograder-backend
+      - name: Check Deployment Status
+        run: |
+          kubectl rollout status deployment/frontend-deployment
+          kubectl rollout status deployment/backend-deployment
+          kubectl rollout status deployment/flask-deployment
