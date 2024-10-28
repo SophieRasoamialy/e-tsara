@@ -35,9 +35,11 @@ jobs:
           docker-compose build
           docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
           docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION} 
+          docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
                 
           docker push hasindrae/autograder-backend:${IMAGE_VERSION}
           docker push hasindrae/autograder-frontend:${IMAGE_VERSION}
+          docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
           
 
       - name: Install AWS CLI
@@ -89,7 +91,7 @@ jobs:
         run: |
           kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }}
           kubectl set image deployment/backend-deployment backend=hasindrae/autograder-backend:${{ github.sha }}
-      #kubectl set image deployment/flask-deployment flask=hasindrae/evalpdfservice:${{ github.sha }}
+          kubectl set image deployment/flask-deployment flask=hasindrae/evalpdfservice:${{ github.sha }}
 
       - name: Get logs for debugging
         if: failure()
