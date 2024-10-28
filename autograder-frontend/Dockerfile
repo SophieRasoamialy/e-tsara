@@ -1,5 +1,5 @@
 # Étape de construction
-FROM node:16 AS build
+FROM node:18 AS build
 
 # Créer un répertoire de travail
 WORKDIR /app
