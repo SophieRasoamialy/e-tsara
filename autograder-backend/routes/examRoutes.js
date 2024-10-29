@@ -100,7 +100,7 @@ router.get('/:id', ExamController.getExamById);
  *             schema:
  *               $ref: '#/components/schemas/Exam'
  */
-router.put('/:id', ExamController.updateExam);
+router.put('/:id', authMiddleware, ExamController.updateExam);
 
 /**
  * @swagger
@@ -119,7 +119,7 @@ router.put('/:id', ExamController.updateExam);
  *       204:
  *         description: Examen supprimé avec succès
  */
-router.delete('/:id', ExamController.deleteExam);
+router.delete('/:id', authMiddleware, ExamController.deleteExam);
 
 /**
  * @swagger
