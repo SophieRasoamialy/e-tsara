@@ -15,6 +15,7 @@ const examRoutes = require('./routes/examRoutes');
 const answerQuestionRoutes = require('./routes/answerQuestionRoutes');
 const answerSheetRoutes = require('./routes/answerSheetRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const questionRoutes = require('./routes/questionRoutes');
 
 // Configuration de la clé secrète pour JWT 
 const SECRET_KEY = process.env.SECRET_KEY;
@@ -81,6 +82,7 @@ app.use('/api/exams', examRoutes);
 app.use('/api/reponses', answerQuestionRoutes);
 app.use('/api/feuilles-reponses', answerSheetRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/questions', questionRoutes);
 
 app.get('/cook', (req, res) => {
   console.log('Cookies:', req.cookies);
