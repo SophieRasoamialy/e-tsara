@@ -358,7 +358,7 @@ const CreateExam = () => {
                   Texte de la question
                 </label>
                 <Editor
-                  apiKey="vx9i16y2v638jfhhq9t242kvxkouxaxuo0wrvgxsg4786phi"
+                  apiKey="pfj5wp555kxmoyt0yyzrbzpurbg1dhoal3nlf0itoy9at9k1"
                   init={{
                     plugins:
                       "anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed linkchecker a11ychecker tinymcespellchecker permanentpen powerpaste advtable advcode editimage advtemplate ai mentions tinycomments tableofcontents footnotes mergetags autocorrect typography inlinecss markdown",
@@ -399,7 +399,7 @@ const CreateExam = () => {
                   Réponse
                 </label>
                 <Editor
-                  apiKey="vx9i16y2v638jfhhq9t242kvxkouxaxuo0wrvgxsg4786phi"
+                  apiKey="pfj5wp555kxmoyt0yyzrbzpurbg1dhoal3nlf0itoy9at9k1"
                   init={{
                     plugins:
                       "anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed linkchecker a11ychecker tinymcespellchecker permanentpen powerpaste advtable advcode editimage advtemplate ai mentions tinycomments tableofcontents footnotes mergetags autocorrect typography inlinecss markdown",
