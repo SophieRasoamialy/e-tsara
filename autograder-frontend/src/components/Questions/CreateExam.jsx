@@ -385,13 +385,12 @@ const CreateExam = () => {
                       handleChangeQuestion(index, "answer_type", e.target.value)
                     }
                     className="bg-white border border-gray-300 text-gray-900 text-sm rounded-full focus:ring-[#1f81a9] focus:border-[#1f81a9] block w-full pl-10 p-2.5 shadow-lg"
-                  >
-                    <option value="Texte">Texte</option>
+                  >  
+
+                    <option value="texte">Texte</option>
                     <option value="QCM">QCM</option>
-                    <option value="Vrai ou Faux">Vrai ou Faux</option>
-                    <option value="Tableau">Tableau</option>
-                    <option value="Diagramme">Diagramme</option>
-                    <option value="Image">Image</option>
+                    <option value="vrai ou faux">Vrai ou Faux</option>
+                    
                   </select>
                 </div>
 
