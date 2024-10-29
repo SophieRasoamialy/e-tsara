@@ -57,6 +57,7 @@ function ListEtudiant() {
 
   const handleClassChange = (event) => {
     const classId = event.target.value;
+    setClasses([]);
     setSelectedClass(classId);
     setSearchTerm(""); // Clear search term when changing class
   };
