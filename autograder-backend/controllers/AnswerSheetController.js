@@ -375,7 +375,7 @@ const uploadAndSaveAnswerSheets = async (req, res) => {
       await answerSheet.save();
       // Enregistrement de l'activité après l'enregistrement de la feuille de réponse
       await Activity.create({
-        userId: req.user.name,  // ID de l'utilisateur qui a effectué l'action
+        userId: req.user._id,  // ID de l'utilisateur qui a effectué l'action
         action: "Téléchargement et enregistrement des feuilles de réponse",
         description: `Feuille de réponse uploadée pour l'étudiant: ${student.matricule}, \nFichier: ${fileUrl}`,
       });
@@ -462,7 +462,7 @@ const saveEditedPdf = async (req, res) => {
 
     // Enregistrement de l'activité avec les anciennes et nouvelles informations
     await Activity.create({
-      userId: req.user.name,  // ID de l'utilisateur qui a effectué l'action
+      userId: req.user._id,  // ID de l'utilisateur qui a effectué l'action
       action: "Changement de la feuille de copie déjà corrigée ",
       description: `Mise à jour de la feuille de copie. \nAncien PDF: ${oldPdfUrl}, \nAncienne note: ${oldNote}, \nNouveau PDF: ${fileUrl}, \nNouvelle note: ${note} \nExplication: ${explanation}`,
     });
@@ -608,7 +608,7 @@ const correctAnswerSheet = async (req, res) => {
 
     // Enregistrement de l'activité avec les anciennes et nouvelles informations
     await Activity.create({
-      userId: req.user.name,  // ID de l'utilisateur qui a effectué l'action
+      userId: req.user._id,  // ID de l'utilisateur qui a effectué l'action
       action: "Correction de la feuille de réponse",
       description: `Feuille de réponse corrigée pour l'examen: ${answerSheet.exam_id.name}, \nÉtudiant: ${answerSheet.student_matricule}, \nNote finale: ${totalPoints}, \nLien du PDF corrigé: ${s3Response.Location}`
     });
