@@ -63,41 +63,60 @@ const SubjectDetails = () => {
   const downloadPDF = () => {
     const doc = new jsPDF();
 
-    // Ajouter les informations de base de l'examen
-    doc.text(`Matière: ${subject.name}`, 10, 10);
-    doc.text(`Année Universitaire: ${exam.academicYear}`, 10, 20);
-    doc.text(`Examen: ${exam.session}  ${exam.semestre}`, 10, 30);
+    // Ajuster la taille de la police
+    doc.setFontSize(10);
 
-    // Afficher les noms des classes (niveaux) associés à l'examen
+    // Largeur de la page pour centrer le texte
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Fonction pour centrer le texte
+    const centerText = (text, yPosition) => {
+        const textWidth = doc.getTextWidth(text);
+        const xPosition = (pageWidth - textWidth) / 2; // Position x centrée
+        doc.text(text, xPosition, yPosition);
+    };
+
+    // Ajouter les informations supplémentaires en haut du document
+    doc.text("Num matricule: .................... Nom et prénom: ...........................................................................", 10, 10);
+    doc.text("Niveau: ................................................................", 10, 20);
+
+    // Centrer les informations de l'examen
+    centerText(`Matière: ${subject.name}`, 30);
+    centerText(`Année Universitaire: ${exam.academicYear}`, 40);
+    centerText(`Examen: ${exam.session}  ${exam.semestre}`, 50);
+
+    // Centrer les noms des classes (niveaux) associés à l'examen
     const classNames = exam.class_ids
       .map((classItem) => classItem.name)
       .join(" / ");
-    doc.text(`Niveau: ${classNames}`, 10, 40);
+    centerText(`Niveau: ${classNames}`, 60);
 
     // Titre pour la section des questions
-    doc.text("Questions:", 10, 50);
+    doc.text("Questions:", 10, 70);
 
     // Ajouter les questions au PDF
-    let yPosition = 60; // Position initiale pour la première question
+    let yPosition = 80; // Position initiale pour la première question
     questions.forEach((q, index) => {
-      let decodedText = decodeHtmlEntities(q.text);
-      decodedText = decodedText.replace(/<br>/g, "\n");
-      decodedText = decodedText.replace(/- /g, "\n   - ");
+        let decodedText = decodeHtmlEntities(q.text);
+        decodedText = decodedText.replace(/<br>/g, "\n");
+        decodedText = decodedText.replace(/- /g, "\n   - ");
 
-      // Supprimer les balises HTML
-      decodedText = stripHtmlTags(decodedText);
+        // Supprimer les balises HTML
+        decodedText = stripHtmlTags(decodedText);
 
-      const lines = doc.splitTextToSize(decodedText, 180);
+        const lines = doc.splitTextToSize(decodedText, 180);
 
-      doc.text(`${index + 1}.`, 10, yPosition); // Numéro de question
-      doc.text(lines, 20, yPosition); // Texte de la question
+        // Afficher le numéro et le texte de la question
+        doc.text(`${index + 1}.`, 10, yPosition); // Numéro de question
+        doc.text(lines, 20, yPosition); // Texte de la question
 
-      yPosition += lines.length * 7.5; // Ajuster la position pour la prochaine question
+        yPosition += lines.length * 7; // Ajuster la position pour la prochaine question
     });
 
     // Enregistrer le PDF avec un nom de fichier approprié
     doc.save(`${subject.name}-exam.pdf`);
-  };
+};
+
 
   return (
     <div className="flex">
