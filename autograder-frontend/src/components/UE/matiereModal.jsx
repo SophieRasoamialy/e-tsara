@@ -26,7 +26,7 @@ function SubjectModal({ isOpen, onClose, moduleId, selectedSubject, fetchSubject
   useEffect(() => {
     const fetchProfessors = async () => {
       try {
-        const response = await axios.get(`${apiUrl}/api/users/role/66b44551ac5a7298232da495`); // URL modifiée pour correspondre à votre API
+        const response = await axios.get(`${apiUrl}/api/users/role/671fa14fc57009c6e24af63e`); // URL modifiée pour correspondre à votre API
         setProfessors(response.data);
       } catch (error) {
         console.error("Erreur lors de la récupération des professeurs:", error);
