@@ -30,7 +30,7 @@ exports.createExam = async (req, res) => {
     await newExam.save();
     // Enregistrement de l'activité
     await Activity.create({
-      userId: req.user.name,
+      userId: req.user._id,
       action: "créer examen",
       description: `Création de l'examen ${newExam}`,
     });
@@ -141,7 +141,7 @@ exports.updateExam = async (req, res) => {
 
     // Enregistrement de l'activité
     await Activity.create({
-      userId: req.user.name,
+      userId: req.user._id,
       action: 'modifier examen',
       description: description,
     });
@@ -167,7 +167,7 @@ exports.deleteExam = async (req, res) => {
 
     // Enregistrement de l'activité
     await Activity.create({
-      userId: req.user.name,
+      userId: req.user._id,
       action: 'supprimer examen',
       description: `Suppression de l'examen "${deletedExam.titre}" pour la matière "${deletedExam.subject_id}" (Session: ${deletedExam.session}, Semestre: ${deletedExam.semestre})`,
     });
