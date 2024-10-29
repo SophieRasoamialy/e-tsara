@@ -71,6 +71,9 @@ const SubjectDetails = () => {
     // Définir l'interligne (en points)
     const lineHeight = 8;
     
+    // Espace vertical entre les questions
+    const questionSpacing = 5;
+    
     // Largeur de la page pour centrer le texte
     const pageWidth = doc.internal.pageSize.getWidth();
     
@@ -102,16 +105,20 @@ const SubjectDetails = () => {
     // Fonction pour remplacer les cases à cocher
     const replaceCheckboxes = (text) => {
       return text
-        .replace(/%¡/g, '☐')  // Remplacer %¡ par un carré
+        .replace(/☐/g, '☐')  // Conserver les cases à cocher intactes
         .replace(/- /g, '\n - ');
     };
     
-    // Fonction pour nettoyer le texte HTML
-    const cleanText = (text) => {
+    // Fonction pour nettoyer et formater le texte
+    const formatText = (text) => {
       let cleaned = decodeHtmlEntities(text);
       cleaned = cleaned.replace(/<br>/g, '\n');
       cleaned = stripHtmlTags(cleaned);
       cleaned = replaceCheckboxes(cleaned);
+  
+      // Remplacer les espaces multiples par un seul espace
+      cleaned = cleaned.replace(/\s+/g, ' ');
+  
       return cleaned;
     };
     
@@ -119,25 +126,22 @@ const SubjectDetails = () => {
     let yPosition = 30 + 5 * lineHeight;
     
     questions.forEach((q, index) => {
-      // Nettoyer et préparer le texte
-      const cleanedText = cleanText(q.text);
+      // Nettoyer et formater le texte de la question
+      const formattedText = formatText(q.text);
       
       // Diviser le texte en lignes selon la largeur de page
       const maxWidth = 180;
-      const lines = doc.splitTextToSize(cleanedText, maxWidth);
+      const lines = doc.splitTextToSize(formattedText, maxWidth);
       
       // Ajouter le numéro de question
       doc.text(`${index + 1}.`, 10, yPosition);
       
-      // Ajouter le texte de la question avec l'interligne personnalisé
+      // Ajouter le texte de la question avec la police par défaut
+      doc.setFont("helvetica");
       doc.text(lines, 20, yPosition);
       
       // Calculer la position Y pour la prochaine question
-      // en tenant compte du nombre de lignes et de l'interligne
-      yPosition += lines.length * lineHeight;
-      
-      // Ajouter un espace supplémentaire entre les questions
-      yPosition += lineHeight / 2;
+      yPosition += lines.length * lineHeight + questionSpacing;
       
       // Vérifier si on a besoin d'une nouvelle page
       if (yPosition > doc.internal.pageSize.height - 20) {
@@ -149,7 +153,6 @@ const SubjectDetails = () => {
     // Enregistrer le PDF
     doc.save(`${subject.name}-exam.pdf`);
   };
-
 
   return (
     <div className="flex">
