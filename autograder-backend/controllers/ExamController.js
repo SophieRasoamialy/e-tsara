@@ -28,10 +28,10 @@ exports.createExam = async (req, res) => {
       class_ids,
     });
     await newExam.save();
-
+console.log("user auth:", req.user);
     // Enregistrement de l'activité
     await Activity.create({
-      userId: req.user.name,
+      userId: req.user._id,
       action: "créer examen",
       description: `Création de l'examen ${newExam}`,
     });
