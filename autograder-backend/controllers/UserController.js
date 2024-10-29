@@ -57,10 +57,14 @@ exports.searchUsers = async (req, res) => {
 
 // Fonction pour rechercher des utilisateurs par rôle
 exports.getUsersByRole = async (req, res) => {
-  const { role } = req.params; // ID du rôle au lieu du nom du rôle
 
   try {
-    const users = await User.find({ role: role }).populate('role'); // Peupler le champ role avec les données de Role
+    const role = await Role.findOne({ name: "professeur" }); 
+    // Vérifier si le rôle existe
+    if (!role) {
+      return res.status(404).json({ msg: `Aucun rôle trouvé pour le nom: ${roleName}` });
+    }
+    const users = await User.find({ role: role._id }).populate('role'); 
     if (users.length === 0) {
       return res.status(404).json({ msg: `Aucun utilisateur trouvé pour le rôle avec ID: ${role}` });
     }
