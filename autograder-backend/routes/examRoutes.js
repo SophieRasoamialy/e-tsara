@@ -30,7 +30,7 @@ const authMiddleware = require('../middleware/authMiddleware');
  *             schema:
  *               $ref: '#/components/schemas/Exam'
  */
-router.post('/', ExamController.createExam);
+router.post('/', authMiddleware, ExamController.createExam);
 
 /**
  * @swagger
