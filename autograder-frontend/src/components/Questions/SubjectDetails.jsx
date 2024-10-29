@@ -61,61 +61,94 @@ const SubjectDetails = () => {
   };
 
   const downloadPDF = () => {
-    const doc = new jsPDF();
-
-    // Ajuster la taille de la police
+    // Créer un nouveau document PDF avec encodage UTF-8
+    const doc = new jsPDF('p', 'mm', 'a4', true);
+    
+    // Configurer la police et la taille
+    doc.setFont("helvetica");
     doc.setFontSize(10);
-
+    
+    // Définir l'interligne (en points)
+    const lineHeight = 8;
+    
     // Largeur de la page pour centrer le texte
     const pageWidth = doc.internal.pageSize.getWidth();
-
+    
     // Fonction pour centrer le texte
     const centerText = (text, yPosition) => {
-        const textWidth = doc.getTextWidth(text);
-        const xPosition = (pageWidth - textWidth) / 2; // Position x centrée
-        doc.text(text, xPosition, yPosition);
+      const textWidth = doc.getTextWidth(text);
+      const xPosition = (pageWidth - textWidth) / 2;
+      doc.text(text, xPosition, yPosition);
     };
-
-    // Ajouter les informations supplémentaires en haut du document
+    
+    // En-tête du document
     doc.text("Num matricule: .................... Nom et prénom: ...........................................................................", 10, 10);
-    doc.text("Niveau: ................................................................", 10, 20);
-
-    // Centrer les informations de l'examen
+    doc.text("......................................................Niveau: ................................................................", 10, 20);
+    
+    // Informations centrées de l'examen
     centerText(`Matière: ${subject.name}`, 30);
-    centerText(`Année Universitaire: ${exam.academicYear}`, 40);
-    centerText(`Examen: ${exam.session}  ${exam.semestre}`, 50);
-
-    // Centrer les noms des classes (niveaux) associés à l'examen
+    centerText(`Année Universitaire: ${exam.academicYear}`, 30 + lineHeight);
+    centerText(`Examen: ${exam.session} ${exam.semestre}`, 30 + 2 * lineHeight);
+    
+    // Niveaux
     const classNames = exam.class_ids
       .map((classItem) => classItem.name)
       .join(" / ");
-    centerText(`Niveau: ${classNames}`, 60);
-
-    // Titre pour la section des questions
-    doc.text("Questions:", 10, 70);
-
-    // Ajouter les questions au PDF
-    let yPosition = 80; // Position initiale pour la première question
+    centerText(`Niveau: ${classNames}`, 30 + 3 * lineHeight);
+    
+    // Section des questions
+    doc.text("Questions:", 10, 30 + 4 * lineHeight);
+    
+    // Fonction pour remplacer les cases à cocher
+    const replaceCheckboxes = (text) => {
+      return text
+        .replace(/%¡/g, '☐')  // Remplacer %¡ par un carré
+        .replace(/- /g, '\n - ');
+    };
+    
+    // Fonction pour nettoyer le texte HTML
+    const cleanText = (text) => {
+      let cleaned = decodeHtmlEntities(text);
+      cleaned = cleaned.replace(/<br>/g, '\n');
+      cleaned = stripHtmlTags(cleaned);
+      cleaned = replaceCheckboxes(cleaned);
+      return cleaned;
+    };
+    
+    // Ajouter les questions
+    let yPosition = 30 + 5 * lineHeight;
+    
     questions.forEach((q, index) => {
-        let decodedText = decodeHtmlEntities(q.text);
-        decodedText = decodedText.replace(/<br>/g, "\n");
-        decodedText = decodedText.replace(/- /g, "\n   - ");
-
-        // Supprimer les balises HTML
-        decodedText = stripHtmlTags(decodedText);
-
-        const lines = doc.splitTextToSize(decodedText, 180);
-
-        // Afficher le numéro et le texte de la question
-        doc.text(`${index + 1}.`, 10, yPosition); // Numéro de question
-        doc.text(lines, 20, yPosition); // Texte de la question
-
-        yPosition += lines.length * 7; // Ajuster la position pour la prochaine question
+      // Nettoyer et préparer le texte
+      const cleanedText = cleanText(q.text);
+      
+      // Diviser le texte en lignes selon la largeur de page
+      const maxWidth = 180;
+      const lines = doc.splitTextToSize(cleanedText, maxWidth);
+      
+      // Ajouter le numéro de question
+      doc.text(`${index + 1}.`, 10, yPosition);
+      
+      // Ajouter le texte de la question avec l'interligne personnalisé
+      doc.text(lines, 20, yPosition);
+      
+      // Calculer la position Y pour la prochaine question
+      // en tenant compte du nombre de lignes et de l'interligne
+      yPosition += lines.length * lineHeight;
+      
+      // Ajouter un espace supplémentaire entre les questions
+      yPosition += lineHeight / 2;
+      
+      // Vérifier si on a besoin d'une nouvelle page
+      if (yPosition > doc.internal.pageSize.height - 20) {
+        doc.addPage();
+        yPosition = 20;
+      }
     });
-
-    // Enregistrer le PDF avec un nom de fichier approprié
+    
+    // Enregistrer le PDF
     doc.save(`${subject.name}-exam.pdf`);
-};
+  };
 
 
   return (
