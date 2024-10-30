@@ -112,10 +112,9 @@ const SubjectDetails = () => {
     // Fonction pour nettoyer et formater le texte
     const formatText = (text) => {
       let cleaned = decodeHtmlEntities(text);
-      cleaned = cleaned.replace(/<br>/g, '\n');
-      cleaned = stripHtmlTags(cleaned);
+      cleaned = cleaned.replace(/<br>/g, "\n");
       cleaned = replaceCheckboxes(cleaned);
-  
+
       // Remplacer les espaces multiples par un seul espace
       cleaned = cleaned.replace(/\s+/g, ' ');
   
