@@ -1,34 +1,22 @@
 name: CI/CD Pipeline
-
 on:
   push:
     branches:
       - main
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-
       - name: Install Docker Compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.10.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
-
-      # Log in to Docker Hub avant le build
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      # Build et push des images Docker en une seule étape
-      #docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
-      #docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
-
       - name: Build and Push Docker images
         run: |
           IMAGE_VERSION=${{ github.sha }}
@@ -40,29 +28,22 @@ jobs:
           docker push hasindrae/autograder-backend:${IMAGE_VERSION}
           docker push hasindrae/autograder-frontend:${IMAGE_VERSION}
           docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
-          
-
       - name: Install AWS CLI
         run: |
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
             sudo ./aws/install --update
-
       - name: Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region us-east-1 
-
       - name: Install eksctl
         run: |
           curl --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
-
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name autograder
-
-      # Vérification et création des ressources de stockage si nécessaire
       - name: Check and Create Storage Resources
         run: |
           if ! kubectl get pv host-pv &>/dev/null; then
@@ -73,8 +54,6 @@ jobs:
             kubectl apply -f host-pvc.yaml
             kubectl wait --for=condition=Bound pvc/mongo-pvc --timeout=60s
           fi
-
-      # Déploiement Kubernetes
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f mongo-deployment.yaml
@@ -86,13 +65,11 @@ jobs:
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
           kubectl apply -f flask-service.yaml
-
       - name: Update Deployments with new images
         run: |
           kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }}
           kubectl set image deployment/backend-deployment backend=hasindrae/autograder-backend:${{ github.sha }}
           kubectl set image deployment/flask-deployment flask=hasindrae/evalpdfservice:${{ github.sha }}
-
       - name: Get logs for debugging
         if: failure()
         run: kubectl logs -l app=autograder-backend
