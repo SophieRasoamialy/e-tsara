@@ -34,12 +34,12 @@ jobs:
             docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION}
             docker push hasindrae/autograder-frontend:${IMAGE_VERSION}
           fi
-          if git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" | grep -q '^backend/'
+          if git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" | grep -q '^backend/';
             docker-compose build backend
             docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
             docker push hasindrae/autograder-backend:${IMAGE_VERSION}
           fi
-          if git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" | grep -q '^flask/'
+          if git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" | grep -q '^flask/';
             docker-compose build flask
             docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
             docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
