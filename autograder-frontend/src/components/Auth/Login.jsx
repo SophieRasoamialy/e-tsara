@@ -29,6 +29,7 @@ const Login = () => {
     resolver: zodResolver(schema),
   });
   const apiUrl = env.API_URL || "";
+  console.log("apiurl>>>>>><", apiUrl);
   
 
   const onSubmit = async (data) => {
