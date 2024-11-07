@@ -137,7 +137,7 @@ const fetchRecentActivities = async () => {
           </div>
           <div className="bg-white p-4 rounded-lg shadow-md flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Examens corrigés</h3>
+              <h3 className="text-lg font-semibold text-gray-800">Copies corrigés</h3>
               <p className="text-3xl font-bold text-gray-900">{quickStats.correctedExams}</p>
             </div>
             <FaQuestionCircle className="text-4xl text-[#1f81a9]" />
