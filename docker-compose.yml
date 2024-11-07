@@ -9,8 +9,6 @@ services:
     image: hasindrae/autograder-frontend:latest
     ports:
       - "3000:80"  # Mappe le port 80 du conteneur au port 3000 de la machine hôte
-    environment:
-      - API_URL=http://localhost:8000 
     depends_on:
       - backend  # Assure que le backend démarre avant le frontend
     networks:
