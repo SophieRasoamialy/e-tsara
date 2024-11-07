@@ -376,7 +376,7 @@ const uploadAndSaveAnswerSheets = async (req, res) => {
       // Enregistrement de l'activité après l'enregistrement de la feuille de réponse
       await Activity.create({
         userId: req.user._id,  // ID de l'utilisateur qui a effectué l'action
-        action: "Téléchargement et enregistrement des feuilles de réponse",
+        action: "Téléchargement et enregistrement des feuilles ",
         description: `Feuille de réponse uploadée pour l'étudiant: ${student.matricule}, \nFichier: ${fileUrl}`,
       });
     }
@@ -609,7 +609,7 @@ const correctAnswerSheet = async (req, res) => {
     // Enregistrement de l'activité avec les anciennes et nouvelles informations
     await Activity.create({
       userId: req.user._id,  // ID de l'utilisateur qui a effectué l'action
-      action: "Correction de la feuille de réponse",
+      action: "Correction des feuilles ",
       description: `Feuille de réponse corrigée pour l'examen: ${answerSheet.exam_id.name}, \nÉtudiant: ${answerSheet.student_matricule}, \nNote finale: ${totalPoints}, \nLien du PDF corrigé: ${s3Response.Location}`
     });
 
@@ -621,6 +621,64 @@ const correctAnswerSheet = async (req, res) => {
     res.status(500).json({
       message: "Erreur serveur lors de la correction de la feuille de réponse",
     });
+  }
+};
+
+// Fonction pour compter toutes les feuilles téléchargées
+const countUploadedSheets = async (req, res) => {
+  try {
+    const uploadedSheetsCount = await AnswerSheet.countDocuments({ sheet: { $ne: null } });
+    res.status(200).json({ count: uploadedSheetsCount });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors du comptage des feuilles téléchargées', error });
+  }
+};
+
+// Fonction pour compter toutes les feuilles corrigées
+const countCorrectedSheets = async (req, res) => {
+  try {
+    const correctedSheetsCount = await AnswerSheet.countDocuments({ sheet_corrige: { $ne: null } });
+    res.status(200).json({ count: correctedSheetsCount });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors du comptage des feuilles corrigées', error });
+  }
+};
+
+// Fonction pour obtenir les moyennes par semestre
+const getSemesterPerformance = async (req, res) => {
+  try {
+    const performanceData = await AnswerSheet.aggregate([
+      {
+        $match: { note: { $ne: null } } // Exclure les notes nulles
+      },
+      {
+        $addFields: {
+          semester: {
+            $cond: [
+              { $lte: [{ $month: "$createdAt" }, 6] },  // Si mois <= 6, semestre 1
+              1,
+              2
+            ]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { 
+            semester: "$semester",
+            year: { $year: "$createdAt" }
+          },
+          averageScore: { $avg: "$note" }
+        }
+      },
+      {
+        $sort: { "_id.year": 1, "_id.semester": 1 } // Trier par année puis par semestre
+      }
+    ]);
+
+    res.status(200).json(performanceData);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération des performances', error });
   }
 };
 
@@ -636,4 +694,7 @@ module.exports = {
   correctAnswerSheet,
   getSheetsCorrige,
   saveEditedPdf,
+  countUploadedSheets,
+  countCorrectedSheets,
+  getSemesterPerformance,
 };

@@ -23,8 +23,14 @@ spec:
         - containerPort: 8000
         env:
         - name: MONGO_URI
-          value: mongodb://mongo-db:27017/autograderDB
+          valueFrom:
+            secretKeyRef:
+              name: autograder-secrets
+              key: MONGO_URI
         - name: SECRET_KEY
-          value: YrG4d72V66jhSW5jbxpW34tUBfdtKGhR84uHtR33WfXq696V93
+          valueFrom:
+            secretKeyRef:
+              name: autograder-secrets
+              key: SECRET_KEY
         - name: ROLE
           value: backend

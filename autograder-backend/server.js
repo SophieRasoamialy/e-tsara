@@ -16,6 +16,7 @@ const answerQuestionRoutes = require('./routes/answerQuestionRoutes');
 const answerSheetRoutes = require('./routes/answerSheetRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const questionRoutes = require('./routes/questionRoutes');
+const activityRoutes = require('./routes/activityRoutes');
 
 // Configuration de la clé secrète pour JWT 
 const SECRET_KEY = process.env.SECRET_KEY;
@@ -58,7 +59,7 @@ app.use((req, res, next) => {
 
 // Connexion à MongoDB
 mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
+  useNewUrlParser: true, 
   useUnifiedTopology: true,
 })
 .then(() => console.log('MongoDB connected'))
@@ -83,6 +84,7 @@ app.use('/api/reponses', answerQuestionRoutes);
 app.use('/api/feuilles-reponses', answerSheetRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/questions', questionRoutes);
+app.use('/api/activities', activityRoutes);
 
 app.get('/cook', (req, res) => {
   console.log('Cookies:', req.cookies);

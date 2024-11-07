@@ -39,7 +39,7 @@ function AdminActivityPage() {
             {activities.length > 0 ? (
               activities.map(activity => (
                 <tr key={activity._id} className="border-b border-gray-200">
-                  <td className="py-3 px-6 text-left">{activity.userId}</td>
+                  <td className="py-3 px-6 text-left">{activity.userId.name}</td>
                   <td className="py-3 px-6 text-left">{activity.action}</td>
                   <td className="py-3 px-6 text-left">{activity.description}</td>
                   <td className="py-3 px-6 text-left">{new Date(activity.timestamp).toLocaleString()}</td>

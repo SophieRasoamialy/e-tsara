@@ -31,7 +31,7 @@ exports.createExam = async (req, res) => {
     // Enregistrement de l'activité
     await Activity.create({
       userId: req.user._id,
-      action: "créer examen",
+      action: "créaction d'examen",
       description: `Création de l'examen ${newExam}`,
     });
 
@@ -142,7 +142,7 @@ exports.updateExam = async (req, res) => {
     // Enregistrement de l'activité
     await Activity.create({
       userId: req.user._id,
-      action: 'modifier examen',
+      action: "modification d'examen",
       description: description,
     });
 

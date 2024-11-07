@@ -177,6 +177,10 @@ const ListCopy = () => {
     navigate("/upload-copy");
   };
 
+  const handleListCorrigees = () => {
+    navigate("/copies-corriges");
+  };
+
   // Calculer les indices des PDFs à afficher pour la page actuelle
   const indexOfLastPdf = (currentPage + 1) * pdfPerPage;
   const indexOfFirstPdf = indexOfLastPdf - pdfPerPage;
@@ -190,6 +194,7 @@ const ListCopy = () => {
     <div className="flex">
       <Sidebar />
       <div className="min-h-screen p-8 bg-[#f3fbfa] pl-72 w-full">
+        <div className="flex">
         <button
           onClick={handleUpload}
           className="absolute top-4 right-4 text-white bg-[#1f81a9] hover:bg-[#145c73] focus:outline-none focus:ring-4 focus:ring-[#1f81a9] font-medium rounded-full text-sm px-5 py-2.5 text-center mb-2"
@@ -199,6 +204,16 @@ const ListCopy = () => {
             <FaUpload />
           </span>
         </button>
+        <button
+          onClick={handleListCorrigees}
+          className="absolute top-4 right-32 text-white bg-[#1f81a9] hover:bg-[#145c73] focus:outline-none focus:ring-4 focus:ring-[#1f81a9] font-medium rounded-full text-sm px-5 py-2.5 text-center mb-2"
+        >
+          <span className="material-icons space-x-1 flex">
+            <span>Feuilles Corrigées</span>
+            
+          </span>
+        </button>
+        </div>
         <div className="mb-6">
           <h1 className=" font-bold mb-2">
             Liste des Feuilles de Copie non corrigé
