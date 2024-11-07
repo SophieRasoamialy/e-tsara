@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import "./print.css";
 import env from "react-dotenv";
+import { fontBase64 } from "../../assets/fontBase64";
 
 const SubjectDetails = () => {
   const { id } = useParams();
@@ -26,9 +27,7 @@ const SubjectDetails = () => {
   useEffect(() => {
     const fetchExamDetails = async () => {
       try {
-        const response = await axios.get(
-          `${apiUrl}/api/exams/${id}`
-        );
+        const response = await axios.get(`${apiUrl}/api/exams/${id}`);
         setSubject(response.data.exam.subject_id);
         setExam(response.data.exam);
         setQuestions(response.data.questions);
@@ -41,7 +40,7 @@ const SubjectDetails = () => {
     };
 
     fetchExamDetails();
-  }, [id]);
+  }, [id, apiUrl]);
 
   if (!exam) {
     return <div>Chargement des détails du sujet...</div>;
@@ -50,108 +49,119 @@ const SubjectDetails = () => {
   const toggleShowAnswers = () => {
     setShowAnswers(!showAnswers);
   };
-  function decodeHtmlEntities(text) {
-    const txt = document.createElement("textarea");
-    txt.innerHTML = text;
-    return txt.value;
-  }
-
-  const stripHtmlTags = (text) => {
-    return text.replace(/<[^>]+>/g, ""); // Supprime toutes les balises HTML
-  };
 
   const downloadPDF = () => {
-    // Créer un nouveau document PDF avec encodage UTF-8
-    const doc = new jsPDF('p', 'mm', 'a4', true);
-    
+    // Créer un nouveau document PDF
+    const doc = new jsPDF("p", "mm", "a4");
+
+    // Charger la police Unicode personnalisée
+    doc.addFileToVFS("NotoSans-Regular.ttf", fontBase64); // `fontBase64` est la base64 de la police
+    doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+    doc.setFont("NotoSans"); // Définir la police pour le document
+
     // Configurer la police et la taille
     doc.setFont("helvetica");
-    doc.setFontSize(10);
-    
+    doc.setFontSize(8);  // Taille de police par défaut
+
     // Définir l'interligne (en points)
     const lineHeight = 8;
-    
-    // Espace vertical entre les questions
-    const questionSpacing = 5;
-    
+
     // Largeur de la page pour centrer le texte
     const pageWidth = doc.internal.pageSize.getWidth();
-    
+
     // Fonction pour centrer le texte
     const centerText = (text, yPosition) => {
-      const textWidth = doc.getTextWidth(text);
-      const xPosition = (pageWidth - textWidth) / 2;
-      doc.text(text, xPosition, yPosition);
+        const textWidth = doc.getTextWidth(text);
+        const xPosition = (pageWidth - textWidth) / 2;
+        doc.text(text, xPosition, yPosition);
     };
-    
+
     // En-tête du document
-    doc.text("Num matricule: .................... Nom et prénom: ...........................................................................", 10, 10);
-    doc.text("......................................................Niveau: ................................................................", 10, 20);
-    
+    doc.text(
+        "Num matricule: .................... Nom et prénom: .......................................................................................................................................",
+        10,
+        10
+    );
+    doc.text(
+        "..................................................................................................................Niveau: ................................................................",
+        10,
+        20
+    );
+
     // Informations centrées de l'examen
     centerText(`Matière: ${subject.name}`, 30);
     centerText(`Année Universitaire: ${exam.academicYear}`, 30 + lineHeight);
     centerText(`Examen: ${exam.session} ${exam.semestre}`, 30 + 2 * lineHeight);
-    
+
     // Niveaux
     const classNames = exam.class_ids
-      .map((classItem) => classItem.name)
-      .join(" / ");
+        .map((classItem) => classItem.name)
+        .join(" / ");
     centerText(`Niveau: ${classNames}`, 30 + 3 * lineHeight);
-    
+
     // Section des questions
     doc.text("Questions:", 10, 30 + 4 * lineHeight);
-    
-    // Fonction pour remplacer les cases à cocher
-    const replaceCheckboxes = (text) => {
-      return text
-        .replace(/☐/g, '☐')  // Conserver les cases à cocher intactes
-        .replace(/- /g, '\n - ');
-    };
-    
-    // Fonction pour nettoyer et formater le texte
-    const formatText = (text) => {
-      let cleaned = decodeHtmlEntities(text);
-      cleaned = cleaned.replace(/<br>/g, "\n");
-      cleaned = replaceCheckboxes(cleaned);
 
-      // Remplacer les espaces multiples par un seul espace
-      cleaned = cleaned.replace(/\s+/g, ' ');
-  
-      return cleaned;
-    };
-    
-    // Ajouter les questions
+    // Position initiale pour les questions
     let yPosition = 30 + 5 * lineHeight;
+
+    // Créer un conteneur HTML pour chaque question
+    let questionsHTML = "";
     
+    // Fonction pour découper le texte en lignes
+    const splitText = (text, maxWidth) => {
+        let lines = [];
+        let currentLine = "";
+
+        text.split(" ").forEach((word) => {
+            if (doc.getTextWidth(currentLine + " " + word) < maxWidth) {
+                currentLine += (currentLine ? " " : "") + word;
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
+        });
+
+        if (currentLine) lines.push(currentLine);
+        return lines;
+    };
+
+    // Fonction pour remplacer les cases à cocher dans le texte par des codes Unicode
+const replaceCheckbox = (text) => {
+  return text.replace(/☐/g, "\u2610"); // Remplace toutes les cases à cocher "vide"
+};
+
+
+    // Parcourir les questions et les diviser en lignes
     questions.forEach((q, index) => {
-      // Nettoyer et formater le texte de la question
-      const formattedText = formatText(q.text);
-      
-      // Diviser le texte en lignes selon la largeur de page
-      const maxWidth = 180;
-      const lines = doc.splitTextToSize(formattedText, maxWidth);
-      
-      // Ajouter le numéro de question
-      doc.text(`${index + 1}.`, 10, yPosition);
-      
-      // Ajouter le texte de la question avec la police par défaut
-      doc.setFont("helvetica");
-      doc.text(lines, 20, yPosition);
-      
-      // Calculer la position Y pour la prochaine question
-      yPosition += lines.length * lineHeight + questionSpacing;
-      
-      // Vérifier si on a besoin d'une nouvelle page
-      if (yPosition > doc.internal.pageSize.height - 20) {
-        doc.addPage();
-        yPosition = 20;
-      }
+      const lines = splitText(q.text, 300); // Largeur max pour chaque ligne
+  
+
+        const questionHTML = `
+            <div style="font-family: helvetica; font-size: 3px; margin-bottom: ${lineHeight}px; white-space: nowrap; width: 100%; display: block;">
+                <p><strong>${index + 1}.</strong></p>
+                ${lines.map(line => `<p>${line}</p>`).join(" ")}
+            </div>
+        `;
+        
+        questionsHTML += questionHTML;
     });
-    
-    // Enregistrer le PDF
-    doc.save(`${subject.name}-exam.pdf`);
-  };
+const questionTextHTML = replaceCheckbox(questionsHTML);  // Appliquer la transformation
+console.log("questionTextHTML",questionTextHTML);
+    // Ajouter tout le contenu HTML des questions dans le PDF
+    doc.html(questionTextHTML, {
+        callback: function (doc) {
+            // Sauvegarder le PDF après avoir ajouté toutes les questions
+            doc.save(`${subject.name}-exam.pdf`);
+        },
+        x: 10,
+        y: yPosition, // Position Y de départ
+        width: 180, // Limiter la largeur pour éviter que le texte dépasse
+        autoPaging: true,  // Permet de gérer les sauts de page automatiquement
+    });
+};
+  
+  
 
   return (
     <div className="flex">

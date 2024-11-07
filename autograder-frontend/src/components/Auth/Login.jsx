@@ -28,14 +28,14 @@ const Login = () => {
   } = useForm({
     resolver: zodResolver(schema),
   });
-  
   const apiUrl = env.API_URL || "";
+  
 
   const onSubmit = async (data) => {
     console.log('Sending request to:', `${apiUrl}/api/users/login`);
       console.log('Request data:', data);
     try {
-      const response = await fetch("/api/users/login", {
+      const response = await fetch(`${apiUrl}/api/users/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

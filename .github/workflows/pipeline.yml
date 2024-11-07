@@ -9,25 +9,42 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+        with:
+          install: true
+          driver-opts: image=moby/buildkit:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Install Docker Compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.10.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
+
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      - name: Build and Push Docker images
+        
+      - name: Build modified Docker images
         run: |
           IMAGE_VERSION=${{ github.sha }}
-          docker-compose build
-          docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
-          docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION} 
-          docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
-                
-          docker push hasindrae/autograder-backend:${IMAGE_VERSION}
-          docker push hasindrae/autograder-frontend:${IMAGE_VERSION}
-          docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
+          if git diff --name-only HEAD~1 HEAD | grep -q '^frontend/'; then
+            docker-compose build frontend
+            docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION}
+            docker push hasindrae/autograder-frontend:${IMAGE_VERSION}
+          fi
+          if git diff --name-only HEAD~1 HEAD | grep -q '^backend/'; then
+            docker-compose build backend
+            docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
+            docker push hasindrae/autograder-backend:${IMAGE_VERSION}
+          fi
+          if git diff --name-only HEAD~1 HEAD | grep -q '^flask/'; then
+            docker-compose build flask
+            docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
+            docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
+          fi
+
       - name: Install AWS CLI
         run: |
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -46,14 +63,9 @@ jobs:
         run: aws eks update-kubeconfig --name autograder
       - name: Check and Create Storage Resources
         run: |
-          if ! kubectl get pv host-pv &>/dev/null; then
-            kubectl apply -f host-pv.yaml
-          fi
-          
-          if ! kubectl get pvc host-pvc &>/dev/null; then
-            kubectl apply -f host-pvc.yaml
-            kubectl wait --for=condition=Bound pvc/mongo-pvc --timeout=60s
-          fi
+          if ! kubectl get pv host-pv &>/dev/null; then kubectl apply -f host-pv.yaml; fi
+          if ! kubectl get pvc host-pvc &>/dev/null; then kubectl apply -f host-pvc.yaml && kubectl wait --for=condition=Bound pvc/mongo-pvc --timeout=60s; fi
+      
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f mongo-deployment.yaml

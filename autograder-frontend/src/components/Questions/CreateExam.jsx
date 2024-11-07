@@ -31,13 +31,13 @@ const CreateExam = () => {
   const navigate = useNavigate();
 
   const apiUrl = env.API_URL || "";
+  const token = Cookies.get("token");
 
   // Fonction pour récupérer les matières
   const fetchSubjects = async (levelIds) => {
     try {
       setLoadingSubjects(true);
       setNoSubjects(false);
-      const token = Cookies.get("token");
       const response = await axios.get(
         `${apiUrl}/api/matieres/me/${levelIds.join(",")}`,
         {
@@ -65,7 +65,7 @@ const CreateExam = () => {
   // Fonction pour récupérer les niveaux
   const fetchLevels = async () => {
     try {
-      const token = Cookies.get("token");
+      
       const response = await axios.get(
         `${apiUrl}/api/matieres/me/classes`,
         {
@@ -155,6 +155,10 @@ const CreateExam = () => {
         subject_id: subject,
         class_ids: selectedLevels,
         academicYear: examDate,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const examId = examResponse.data.examId;

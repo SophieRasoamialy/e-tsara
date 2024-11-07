@@ -8,6 +8,12 @@ const multer = require('multer');
 const storage = multer.memoryStorage(); // Stocker les fichiers en mémoire pour traitement avec AWS Textract
 const upload = multer({ storage: storage });
 
+router.get('/count-uploaded-sheets', AnswerSheetController.countUploadedSheets);
+router.get('/count-corrected-sheets', AnswerSheetController.countCorrectedSheets);
+
+// Route pour obtenir les performances par semestre
+router.get('/performance/semester', AnswerSheetController.getSemesterPerformance);
+
 
 // Définir la route pour l'upload et l'analyse des feuilles de réponses
 router.post('/upload-answer-sheets', upload.array('files'), AnswerSheetController.uploadAndSaveAnswerSheets);
@@ -171,6 +177,7 @@ router.post('/exam/sheet-answer', AnswerSheetController.getAnswerSheetsByExam);
 router.post('/exam/sheet-answer/correct', AnswerSheetController.correctAnswerSheet);
 
 router.post('/corrigees', AnswerSheetController.getSheetsCorrige)
+
 
 
 module.exports = router;
