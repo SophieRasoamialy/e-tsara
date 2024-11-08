@@ -243,7 +243,7 @@ const CreateExam = () => {
                       aria-label="Remove"
                     >
                       <FaTimes className="w-4 h-4" />
-                      <span className="sr-only">Remove badge</span>
+                      <span className="sr-only">Enlever badge</span>
                     </button>
                   </span>
                 );
@@ -359,7 +359,7 @@ const CreateExam = () => {
             {questions.map((q, index) => (
               <div key={index} className="mb-6">
                 <label className="block text-gray-700 text-sm font-bold mb-2">
-                  Texte de la question
+                  Question
                 </label>
                 <Editor
                   apiKey="s49dgfohnuy27olw43d2lgefvavj9goyfwz75f568hdjow7e"
