@@ -47,22 +47,22 @@ jobs:
             docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
           fi
 
-      - name: Install AWS CLI
-        run: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install --update
       - name: Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region us-east-1 
+
       - name: Install eksctl
-        run: |
-          curl --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" | tar xz -C /tmp
-          sudo mv /tmp/eksctl /usr/local/bin
+        uses: eksctl/eksctl-action@v1
+        with:
+          eksctl-version: 'latest'  
+        
       - name: Update kubeconfig
-        run: aws eks update-kubeconfig --name autograder
+        run: |
+            aws eks update-kubeconfig --name autograder --region us-east-1
+        
+
       - name: Check and Create Storage Resources
         run: |
           if ! kubectl get pv host-pv &>/dev/null; then kubectl apply -f host-pv.yaml; fi
@@ -79,11 +79,35 @@ jobs:
           kubectl apply -f backend-service.yaml
           kubectl apply -f mongo-service.yaml
           kubectl apply -f flask-service.yaml
+
       - name: Update Deployments with new images
         run: |
-          kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${{ github.sha }}
-          kubectl set image deployment/backend-deployment backend=hasindrae/autograder-backend:${{ github.sha }}
-          kubectl set image deployment/flask-deployment flask=hasindrae/evalpdfservice:${{ github.sha }}
+          IMAGE_VERSION=${{ github.sha }}
+
+          # Vérifier si le frontend a été modifié
+          if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-frontend/';then
+            echo "Updating frontend deployment with new image version"
+            kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${IMAGE_VERSION}
+          else
+            echo "No changes in frontend, skipping update for frontend deployment"
+          fi
+
+          # Vérifier si le backend a été modifié
+          if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-backend/';then
+            echo "Updating backend deployment with new image version"
+            kubectl set image deployment/backend-deployment backend=hasindrae/autograder-backend:${IMAGE_VERSION}
+          else
+            echo "No changes in backend, skipping update for backend deployment"
+          fi
+
+          # Vérifier si le service Flask a été modifié
+          if git diff --name-only HEAD~1 HEAD | grep -q '^evalPDFService/';then
+            echo "Updating Flask deployment with new image version"
+            kubectl set image deployment/flask-deployment flask=hasindrae/evalpdfservice:${IMAGE_VERSION}
+          else
+            echo "No changes in Flask, skipping update for Flask deployment"
+          fi
+
       - name: Get logs for debugging
         if: failure()
         run: kubectl logs -l app=autograder-backend
