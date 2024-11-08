@@ -53,11 +53,6 @@ jobs:
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region us-east-1 
 
-      - name: Install eksctl
-        uses: eksctl/eksctl-action@v1
-        with:
-          eksctl-version: 'latest'  
-        
       - name: Update kubeconfig
         run: |
             aws eks update-kubeconfig --name autograder --region us-east-1
