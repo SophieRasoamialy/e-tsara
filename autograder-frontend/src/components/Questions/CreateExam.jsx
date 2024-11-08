@@ -243,7 +243,7 @@ const CreateExam = () => {
                       aria-label="Remove"
                     >
                       <FaTimes className="w-4 h-4" />
-                      <span className="sr-only">Remove badge</span>
+                      <span className="sr-only">Enlever badge</span>
                     </button>
                   </span>
                 );
