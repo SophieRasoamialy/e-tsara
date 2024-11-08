@@ -141,7 +141,7 @@ const Login = () => {
               type="submit"
               className="text-white bg-[#1f81a9] hover:bg-[#145c73] focus:outline-none focus:ring-4 focus:ring-[#1f81a9] font-medium rounded-full text-sm px-5 py-2.5 text-center mb-2 w-full"
             >
-              Signn Inn
+              Signn Inn log
             </button>
           </div>
         </form>
