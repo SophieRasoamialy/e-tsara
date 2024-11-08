@@ -47,7 +47,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
-app.options('*', cors()); // Préparer le backend à répondre aux requêtes CORS OPTIONS
+app.options('*', cors()); 
 
 
 app.use(cookieParser());
@@ -89,7 +89,6 @@ app.use('/api/activities', activityRoutes);
 app.get('/cook', (req, res) => {
   console.log('Cookies:', req.cookies);
 });
-
 
 // Route pour Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
