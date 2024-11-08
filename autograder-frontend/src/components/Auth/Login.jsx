@@ -29,7 +29,8 @@ const Login = () => {
   });
   const apiUrl = env.API_URL || "";
   
-
+console.log("env", env.API_URL);
+console.log("api",apiUrl);
   const onSubmit = async (data) => {
     console.log('Sending request to:', `${apiUrl}/api/users/login`);
       console.log('Request data:', data);
