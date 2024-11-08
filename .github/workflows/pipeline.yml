@@ -32,17 +32,17 @@ jobs:
         run: |
           IMAGE_VERSION=${{ github.sha }}
           if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-frontend/';then
-            docker-compose build frontend
+            docker-compose build --no-cache frontend
             docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION}
             docker push hasindrae/autograder-frontend:${IMAGE_VERSION}
           fi
           if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-backend/';then
-            docker-compose build backend
+            docker-compose build --no-cache backend
             docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
             docker push hasindrae/autograder-backend:${IMAGE_VERSION}
           fi
           if git diff --name-only HEAD~1 HEAD | grep -q '^evalPDFService/';then
-            docker-compose build flask
+            docker-compose build --no-cache flask
             docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
             docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
           fi
