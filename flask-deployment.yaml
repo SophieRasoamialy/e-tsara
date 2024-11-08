@@ -19,5 +19,6 @@ spec:
       containers:
       - name: flask
         image: hasindrae/evalpdfservice:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
