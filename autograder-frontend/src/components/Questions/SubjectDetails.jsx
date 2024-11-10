@@ -139,8 +139,9 @@ const replaceCheckbox = (text) => {
 
         const questionHTML = `
             <div style="font-family: helvetica; font-size: 3px; margin-bottom: ${lineHeight}px; white-space: nowrap; width: 100%; display: block;">
-                <p><strong>${index + 1}.</strong></p>
-                ${lines.map(line => `<p>${line}</p>`).join(" ")}
+                <p><strong>${index + 1}.</strong>
+                ${lines.map(line => `${line}`).join(" ")}
+                </p>
             </div>
         `;
         
