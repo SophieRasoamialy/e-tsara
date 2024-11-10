@@ -24,6 +24,7 @@ function ListEtudiant() {
 
   // Fetch classes and students from the server
   const fetchData = async (classId = "") => {
+    setEtudiants([]);
     try {
       const etudiantsUrl = classId
         ? `${apiUrl}/api/etudiants/class/${classId}`
@@ -37,6 +38,19 @@ function ListEtudiant() {
       setEtudiants(etudiantsRes.data);
     } catch (error) {
       console.error("Erreur lors de la récupération des données:", error);
+    }
+    try{
+
+      const [classesRes] = await Promise.all([
+        axios.get(`${apiUrl}/api/classes`),
+      ]);
+
+      setClasses(classesRes.data);
+
+    }
+    catch(error)
+    {
+      console.error("Erreur lors de la récupération des niveaux :", error);
     }
   };
 

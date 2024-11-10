@@ -134,7 +134,7 @@ const replaceCheckbox = (text) => {
 
     // Parcourir les questions et les diviser en lignes
     questions.forEach((q, index) => {
-      const lines = splitText(q.text, 300); // Largeur max pour chaque ligne
+      const lines = splitText(q.text, 360); // Largeur max pour chaque ligne
   
 
         const questionHTML = `
