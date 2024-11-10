@@ -97,6 +97,7 @@ const UploadCopy = () => {
 
       if (response.status === 200) {
         setResult(response.data.message);
+        console.log(response.data.message);
         setUploadCount(files.length);
       } else {
         console.error("Unexpected response", response);

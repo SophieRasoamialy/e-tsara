@@ -31,21 +31,40 @@ jobs:
       - name: Build modified Docker images
         run: |
           IMAGE_VERSION=${{ github.sha }}
-          if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-frontend/';then
+      
+          # Construction et tagging du frontend
+          if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-frontend/'; then
             docker-compose build --no-cache frontend
+            # Tag avec l'ID de commit unique et push
             docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:${IMAGE_VERSION}
             docker push hasindrae/autograder-frontend:${IMAGE_VERSION}
+            # Tag en tant que 'latest' et push
+            docker tag hasindrae/autograder-frontend:latest hasindrae/autograder-frontend:latest
+            docker push hasindrae/autograder-frontend:latest
           fi
-          if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-backend/';then
+      
+          # Construction et tagging du backend
+          if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-backend/'; then
             docker-compose build --no-cache backend
+            # Tag avec l'ID de commit unique et push
             docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:${IMAGE_VERSION}
             docker push hasindrae/autograder-backend:${IMAGE_VERSION}
+            # Tag en tant que 'latest' et push
+            docker tag hasindrae/autograder-backend:latest hasindrae/autograder-backend:latest
+            docker push hasindrae/autograder-backend:latest
           fi
-          if git diff --name-only HEAD~1 HEAD | grep -q '^evalPDFService/';then
+      
+          # Construction et tagging du service Flask
+          if git diff --name-only HEAD~1 HEAD | grep -q '^evalPDFService/'; then
             docker-compose build --no-cache flask
+            # Tag avec l'ID de commit unique et push
             docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:${IMAGE_VERSION}
             docker push hasindrae/evalpdfservice:${IMAGE_VERSION}
+            # Tag en tant que 'latest' et push
+            docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:latest
+            docker push hasindrae/evalpdfservice:latest
           fi
+      
 
       - name: Configure AWS CLI
         run: |

@@ -431,7 +431,7 @@ const saveEditedPdf = async (req, res) => {
     // Générer un nom unique pour le fichier
     const fileName = `${uuidv4()}-${req.file.originalname}`;
     const fileKey = `corrected-answer-sheets/${fileName}`;
-    
+    console.log("bucket name", process.env.S3_BUCKET_NAME);
     // Paramètres d'upload vers AWS S3
     const s3Params = {
       Bucket: process.env.S3_BUCKET_NAME,
