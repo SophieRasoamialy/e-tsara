@@ -16,7 +16,7 @@ router.get('/performance/semester', AnswerSheetController.getSemesterPerformance
 
 
 // Définir la route pour l'upload et l'analyse des feuilles de réponses
-router.post('/upload-answer-sheets', upload.array('files'), AnswerSheetController.uploadAndSaveAnswerSheets);
+router.post('/upload-answer-sheets', upload.array('files'),authMiddleware, AnswerSheetController.uploadAndSaveAnswerSheets);
 
 router.post('/save-edited-pdf', authMiddleware, upload.single('pdf'), AnswerSheetController.saveEditedPdf);
 
