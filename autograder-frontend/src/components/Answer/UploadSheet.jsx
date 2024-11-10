@@ -7,6 +7,7 @@ import { FaArrowLeft, FaSpinner } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import env from "react-dotenv";
+import Cookies from "js-cookie";
 
 // Styles réutilisables
 const commonInputClasses =
@@ -30,6 +31,7 @@ const UploadCopy = () => {
   const [loading, setLoading] = useState(false); // État pour le spinner
 
   const apiUrl = env.API_URL || "";
+  const token = Cookies.get("token");
 
 
   useEffect(() => {
@@ -91,6 +93,7 @@ const UploadCopy = () => {
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
