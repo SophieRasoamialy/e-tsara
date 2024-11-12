@@ -521,20 +521,20 @@ const correctAnswerSheet = async (req, res) => {
 
     const pdfBytes = s3Object.Body;
 
-    // Convertir le PDF en Buffer pour l'ajouter à FormData
-    const pdfBuffer = Buffer.from(s3Object.Body);
+    const tempPdfPath = `/tmp/${answerSheetId}.pdf`;
+    fs.writeFileSync(tempPdfPath, pdfBytes);
+
+    // Créez un objet FormData pour envoyer le fichier
+    const formData = new FormData();
+    formData.append('pdf', fs.createReadStream(tempPdfPath)); // Ajouter le PDF au formulaire
+    formData.append('correct_answers', JSON.stringify(questionsWithAnswers)); // Ajouter d'autres données si nécessaire
 
 
-     // Créer un objet FormData pour envoyer le fichier
-     const formData = new FormData();
-     formData.append('pdf', pdfBuffer, { filename: `${answerSheetId}.pdf` });
-     formData.append('correct_answers', JSON.stringify(questionsWithAnswers));
- 
-     // Envoyer le fichier PDF et les réponses correctes au serveur Flask
-     const response = await axios.post("http://flask-service:5000/analyze_qcm", formData, {
-       headers: formData.getHeaders(),
-     });
-
+    const response = await axios.post("http://flask-service:5000/analyze_qcm", formData, {
+      headers: {
+        ...formData.getHeaders(),
+      }
+    });
     const results = response.data.results;
     console.log("Results: ", results);
     let totalPoints = 0;
@@ -620,7 +620,7 @@ const correctAnswerSheet = async (req, res) => {
     });
 
     // Nettoyer les fichiers temporaires
-    //fs.unlinkSync(tempPdfPath);
+    fs.unlinkSync(tempPdfPath);
     fs.unlinkSync(correctedFilePath);
   } catch (error) {
     console.error("Erreur lors de la correction de la feuille de réponse:", error);

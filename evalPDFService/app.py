@@ -475,53 +475,43 @@ def compare_responses(annotated, correct_answers):
 
                 break
     return results
-
-
+ 
 @app.route('/analyze_qcm', methods=['POST'])
 def analyze_qcm():
     try:
-        # Vérification des données reçues
-        pdf_file = request.files.get('pdf')
-        correct_answers = request.form.get('correct_answers')
-
-        if not pdf_file or not correct_answers:
-            return jsonify({'error': 'Missing pdf file or correct_answers'}), 400
-
-        # Chargement des réponses correctes
-        correct_answers = json.loads(correct_answers)
-        cleaned_correct_answers = [
-            {
-                'answer': clean_html(ans['answer']),
-                'question': clean_html(ans['question']),
-                'points': ans['points']
-            } for ans in correct_answers
-        ]
-
-        print("Nettoyage des réponses correctes effectué.")
-
-        # Sauvegarde du fichier PDF dans un chemin temporaire
+        pdf_file = request.files['pdf']  # Récupérer le fichier PDF
+        correct_answers = json.loads(request.form.get('correct_answers'))
         pdf_path = "/tmp/tempfile.pdf"
         pdf_file.save(pdf_path)
 
-        # Extraction des informations du PDF
+
+        if not pdf_path or not correct_answers:
+            return jsonify({'error': 'Missing pdf_path or correct_answers'}), 400
+
+        # Nettoyer les réponses correctes
+        cleaned_correct_answers = [{'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']} for ans in correct_answers]
+        print("nettoyage........")
+        # Extraire le texte et les annotations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
-        print("Extraction des informations de l'étudiant et des questions terminée.")
-
-        # Ouverture du document PDF pour extraire les annotations
+        print("extracting student.....................")
+        # Ouvrir le document PDF
         doc = fitz.open(pdf_path)
+        # Extraire les annotations spécifiques des réponses des étudiants
         page_annotations = extract_annotations(doc)
-        print("Extraction des annotations des pages terminée.")
+        print("extraction annotatios")
 
-        # Association des annotations aux questions
+        # Associer les annotations des réponses aux questions
         associated_responses = associate_responses_with_questions(grouped_questions, page_annotations)
-        print("Association des réponses aux questions terminée.")
-
-        # Comparaison des réponses annotées avec les réponses correctes
+        print("association.............")
+        # Comparer les réponses annotées avec les réponses correctes
         comparison_results = compare_responses(associated_responses, cleaned_correct_answers)
-        print("Résultats de la comparaison:", comparison_results)
+        print("comparison_results:",comparison_results)
 
         return jsonify({'results': comparison_results})
-    
+
     except Exception as e:
-        print("Erreur lors de l'analyse du QCM:", str(e))
-        return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
+        error_message = str(e)
+        print(f"Error: {error_message}")  # Pour afficher l'erreur dans les logs
+        return jsonify({'error': 'Internal Server Error', 'details': error_message}), 500
+
+
