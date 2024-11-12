@@ -10,6 +10,7 @@ import { ClipLoader } from "react-spinners";
 import ReactPaginate from "react-paginate";
 import { ChevronLeftCircle, ChevronRightCircle } from "lucide-react";
 import env from "react-dotenv";
+import Cookies from "js-cookie";
 
 // Styles réutilisables
 const commonInputClasses =
@@ -33,6 +34,7 @@ const ListCopy = () => {
   const [isfinished, setIsfinished] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const pdfPerPage = 9; // Nombre de PDFs par page
+  const token = Cookies.get("token");
 
   const navigate = useNavigate();
   const apiUrl = env.API_URL || "";
@@ -126,6 +128,7 @@ const ListCopy = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ answerSheetId: pdf.answerSheetId }),
           }
