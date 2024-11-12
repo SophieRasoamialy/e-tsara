@@ -508,6 +508,7 @@ def analyze_qcm():
 
     except Exception as e:
         print(f"Error: {e}")
+        print("error",e)
         return jsonify({'error': 'Internal Server Error'}), 500
 
 if __name__ == '__main__':
