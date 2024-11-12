@@ -479,8 +479,6 @@ const saveEditedPdf = async (req, res) => {
   }
 };
 
-const AWS = require('aws-sdk');
-const textract = new AWS.Textract();
 
 async function extractAnnotationsFromPdf(pdfBuffer) {
     const textractParams = {
