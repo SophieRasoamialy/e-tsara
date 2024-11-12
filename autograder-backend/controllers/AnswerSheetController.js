@@ -521,9 +521,13 @@ const correctAnswerSheet = async (req, res) => {
 
     const pdfBytes = s3Object.Body;
 
+    // Convertir le PDF en Buffer pour l'ajouter à FormData
+    const pdfBuffer = Buffer.from(s3Object.Body);
+
+
      // Créer un objet FormData pour envoyer le fichier
      const formData = new FormData();
-     formData.append('pdf', s3Object.Body, { filename: `${answerSheetId}.pdf` });
+     formData.append('pdf', pdfBuffer, { filename: `${answerSheetId}.pdf` });
      formData.append('correct_answers', JSON.stringify(questionsWithAnswers));
  
      // Envoyer le fichier PDF et les réponses correctes au serveur Flask
