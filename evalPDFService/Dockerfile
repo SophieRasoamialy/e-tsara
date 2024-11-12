@@ -21,5 +21,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Étape 6 : Exposer le port de l'application Flask
 EXPOSE 5000
 
-# Étape 7 : Démarrer l'application Flask
-CMD ["python", "app.py"]
+# Étape 7 : Démarrer l'application Flask avec Gunicorn
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
