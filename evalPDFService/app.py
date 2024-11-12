@@ -509,7 +509,8 @@ def analyze_qcm():
         return jsonify({'results': comparison_results})
 
     except Exception as e:
-        print(f"Error: {e}")
-        print("error",e)
-        return jsonify({'error': 'Internal Server Error'}), 500
+        error_message = str(e)
+        print(f"Error: {error_message}")  # Pour afficher l'erreur dans les logs
+        return jsonify({'error': 'Internal Server Error', 'details': error_message}), 500
+
 
