@@ -71,7 +71,6 @@ router.get("/", SubjectController.getSubjects);
  *       404:
  *         description: Aucun classe trouvée pour cet enseignant
  */
-DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
 
 /**
  * @swagger
