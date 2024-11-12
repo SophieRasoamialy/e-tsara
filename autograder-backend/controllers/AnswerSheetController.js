@@ -479,6 +479,8 @@ const saveEditedPdf = async (req, res) => {
   }
 };
 
+const AWS = require('aws-sdk');
+const textract = new AWS.Textract();
 
 async function extractAnnotationsFromPdf(pdfBuffer) {
     const textractParams = {
@@ -493,23 +495,25 @@ async function extractAnnotationsFromPdf(pdfBuffer) {
     let annotations = [];
     let pageAnnotations = {};
 
-    const underlineThresholdY = 10; // Seuil pour détecter un soulignement
+    // Critères pour ajuster la détection d'annotations manuelles
+    const underlineThresholdY = 10;
     const ignoreKeywords = [
         "Num matricule", "Nom et prénom", "Niveau", "Matière",
-        "Année Universitaire", "Examen", "Questions", "Complétez"
+        "Année Universitaire", "Examen", "Questions", "Soulignez", "Complétez"
     ];
+    const questionPatterns = /^\d+\.\s|^(A|B|C|D)\)/; // Pour ignorer les questions au format 1., A), etc.
 
     blocks.forEach(block => {
         if (block.BlockType === "LINE") {
             const boundingBox = block.Geometry.BoundingBox;
             const text = block.Text.trim();
 
-            // Vérifier si le texte contient un des mots-clés prédéfinis
-            if (ignoreKeywords.some(keyword => text.includes(keyword))) {
-                return; // Ignorer ce texte
+            // Filtrer les blocs qui correspondent aux mots-clés ou aux motifs de question
+            if (ignoreKeywords.some(keyword => text.includes(keyword)) || questionPatterns.test(text)) {
+                return;
             }
 
-            // Ajoute le texte comme annotation si ce n'est pas un mot-clé
+            // Ajouter l'annotation si elle semble être manuelle (pas dans les textes ignorés)
             const annotation = {
                 type: "text_line",
                 pageNum: block.Page || 0,
@@ -517,13 +521,13 @@ async function extractAnnotationsFromPdf(pdfBuffer) {
                 text: text
             };
 
-            // Détecter un soulignement potentiel
+            // Détecter si un soulignement est manuel
             const nextBlock = getNextBlock(block, blocks);
             if (nextBlock && isUnderline(block, nextBlock, underlineThresholdY)) {
                 annotation.subtype = "manual_underline";
             }
 
-            // Ajouter cette annotation à la page appropriée
+            // Ajouter l'annotation seulement si elle n'est pas liée aux questions
             if (!pageAnnotations[annotation.pageNum]) {
                 pageAnnotations[annotation.pageNum] = [];
             }
@@ -534,7 +538,7 @@ async function extractAnnotationsFromPdf(pdfBuffer) {
     return pageAnnotations;
 }
 
-// Fonction pour obtenir le bloc suivant
+// Fonction d'assistance pour obtenir le bloc suivant
 function getNextBlock(currentBlock, blocks) {
     const currentIndex = blocks.indexOf(currentBlock);
     if (currentIndex !== -1 && currentIndex + 1 < blocks.length) {
@@ -543,12 +547,13 @@ function getNextBlock(currentBlock, blocks) {
     return null;
 }
 
-// Fonction pour détecter un soulignement
+// Fonction d'assistance pour détecter si le texte est souligné en fonction de la proximité verticale
 function isUnderline(currentBlock, nextBlock, thresholdY) {
     const currentY = currentBlock.Geometry.BoundingBox.Top + currentBlock.Geometry.BoundingBox.Height;
     const nextY = nextBlock.Geometry.BoundingBox.Top;
     return Math.abs(currentY - nextY) < thresholdY;
 }
+
 
 const correctAnswerSheet = async (req, res) => {
   const { answerSheetId } = req.body;
