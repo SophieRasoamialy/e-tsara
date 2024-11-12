@@ -521,13 +521,15 @@ const correctAnswerSheet = async (req, res) => {
 
     const pdfBytes = s3Object.Body;
 
-    const tempPdfPath = `/tmp/${answerSheetId}.pdf`;
-    fs.writeFileSync(tempPdfPath, pdfBytes);
-
-    const response = await axios.post("http://flask-service:5000/analyze_qcm", {
-      pdf_path: tempPdfPath,
-      correct_answers: questionsWithAnswers
-    });
+     // Créer un objet FormData pour envoyer le fichier
+     const formData = new FormData();
+     formData.append('pdf', s3Object.Body, { filename: `${answerSheetId}.pdf` });
+     formData.append('correct_answers', JSON.stringify(questionsWithAnswers));
+ 
+     // Envoyer le fichier PDF et les réponses correctes au serveur Flask
+     const response = await axios.post("http://flask-service:5000/analyze_qcm", formData, {
+       headers: formData.getHeaders(),
+     });
 
     const results = response.data.results;
     console.log("Results: ", results);
@@ -614,7 +616,7 @@ const correctAnswerSheet = async (req, res) => {
     });
 
     // Nettoyer les fichiers temporaires
-    fs.unlinkSync(tempPdfPath);
+    //fs.unlinkSync(tempPdfPath);
     fs.unlinkSync(correctedFilePath);
   } catch (error) {
     console.error("Erreur lors de la correction de la feuille de réponse:", error);
