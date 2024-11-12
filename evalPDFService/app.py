@@ -477,7 +477,9 @@ def compare_responses(annotated, correct_answers):
  
 @app.route('/analyze_qcm', methods=['POST'])
 def analyze_qcm():
+    print("11...............")
     try:
+        print("debut.....")
         data = request.json
         pdf_path = data.get('pdf_path')
         correct_answers = data.get('correct_answers')
@@ -487,19 +489,19 @@ def analyze_qcm():
 
         # Nettoyer les réponses correctes
         cleaned_correct_answers = [{'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']} for ans in correct_answers]
-
+        print("nettoyage........")
         # Extraire le texte et les annotations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
-
+        print("extracting student.....................")
         # Ouvrir le document PDF
         doc = fitz.open(pdf_path)
-
         # Extraire les annotations spécifiques des réponses des étudiants
         page_annotations = extract_annotations(doc)
+        print("extraction annotatios")
 
         # Associer les annotations des réponses aux questions
         associated_responses = associate_responses_with_questions(grouped_questions, page_annotations)
-
+        print("association.............")
         # Comparer les réponses annotées avec les réponses correctes
         comparison_results = compare_responses(associated_responses, cleaned_correct_answers)
         print("comparison_results:",comparison_results)
@@ -510,8 +512,4 @@ def analyze_qcm():
         print(f"Error: {e}")
         print("error",e)
         return jsonify({'error': 'Internal Server Error'}), 500
-
-if __name__ == '__main__':
-    print("Starting Flask server.....")
-    app.run(host='0.0.0.0', port=5000, debug=True)
 
