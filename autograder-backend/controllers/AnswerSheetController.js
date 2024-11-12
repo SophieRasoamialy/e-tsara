@@ -20,6 +20,7 @@ const pdfjsLib = require("pdfjs-dist/build/pdf");
 const Tesseract = require("tesseract.js");
 const fontkit = require('fontkit');
 const Activity = require("../models/Activity");
+const FormData = require('form-data');
 
 // Configurer AWS Textract
 const textract = new AWS.Textract({
