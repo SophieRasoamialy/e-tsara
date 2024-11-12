@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import json
 import fitz  # PyMuPDF
 from sentence_transformers import SentenceTransformer, util
 from bs4 import BeautifulSoup
@@ -474,43 +475,53 @@ def compare_responses(annotated, correct_answers):
 
                 break
     return results
- 
+
+
 @app.route('/analyze_qcm', methods=['POST'])
 def analyze_qcm():
-    print("11...............")
     try:
-        print("debut.....")
-        data = request.json
-        pdf_path = data.get('pdf_path')
-        correct_answers = data.get('correct_answers')
+        # Vérification des données reçues
+        pdf_file = request.files.get('pdf')
+        correct_answers = request.form.get('correct_answers')
 
-        if not pdf_path or not correct_answers:
-            return jsonify({'error': 'Missing pdf_path or correct_answers'}), 400
+        if not pdf_file or not correct_answers:
+            return jsonify({'error': 'Missing pdf file or correct_answers'}), 400
 
-        # Nettoyer les réponses correctes
-        cleaned_correct_answers = [{'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']} for ans in correct_answers]
-        print("nettoyage........")
-        # Extraire le texte et les annotations du PDF
+        # Chargement des réponses correctes
+        correct_answers = json.loads(correct_answers)
+        cleaned_correct_answers = [
+            {
+                'answer': clean_html(ans['answer']),
+                'question': clean_html(ans['question']),
+                'points': ans['points']
+            } for ans in correct_answers
+        ]
+
+        print("Nettoyage des réponses correctes effectué.")
+
+        # Sauvegarde du fichier PDF dans un chemin temporaire
+        pdf_path = "/tmp/tempfile.pdf"
+        pdf_file.save(pdf_path)
+
+        # Extraction des informations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
-        print("extracting student.....................")
-        # Ouvrir le document PDF
-        doc = fitz.open(pdf_path)
-        # Extraire les annotations spécifiques des réponses des étudiants
-        page_annotations = extract_annotations(doc)
-        print("extraction annotatios")
+        print("Extraction des informations de l'étudiant et des questions terminée.")
 
-        # Associer les annotations des réponses aux questions
+        # Ouverture du document PDF pour extraire les annotations
+        doc = fitz.open(pdf_path)
+        page_annotations = extract_annotations(doc)
+        print("Extraction des annotations des pages terminée.")
+
+        # Association des annotations aux questions
         associated_responses = associate_responses_with_questions(grouped_questions, page_annotations)
-        print("association.............")
-        # Comparer les réponses annotées avec les réponses correctes
+        print("Association des réponses aux questions terminée.")
+
+        # Comparaison des réponses annotées avec les réponses correctes
         comparison_results = compare_responses(associated_responses, cleaned_correct_answers)
-        print("comparison_results:",comparison_results)
+        print("Résultats de la comparaison:", comparison_results)
 
         return jsonify({'results': comparison_results})
-
+    
     except Exception as e:
-        error_message = str(e)
-        print(f"Error: {error_message}")  # Pour afficher l'erreur dans les logs
-        return jsonify({'error': 'Internal Server Error', 'details': error_message}), 500
-
-
+        print("Erreur lors de l'analyse du QCM:", str(e))
+        return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
