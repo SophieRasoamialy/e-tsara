@@ -7,6 +7,10 @@ import re
 import unicodedata
 import string
 import math
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -479,39 +483,42 @@ def compare_responses(annotated, correct_answers):
 @app.route('/analyze_qcm', methods=['POST'])
 def analyze_qcm():
     try:
-        pdf_file = request.files['pdf']  # Récupérer le fichier PDF
+        pdf_file = request.files['pdf']
         correct_answers = json.loads(request.form.get('correct_answers'))
         pdf_path = "/tmp/tempfile.pdf"
         pdf_file.save(pdf_path)
 
-
         if not pdf_path or not correct_answers:
+            logger.warning("Missing pdf_path or correct_answers")
             return jsonify({'error': 'Missing pdf_path or correct_answers'}), 400
 
         # Nettoyer les réponses correctes
-        cleaned_correct_answers = [{'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']} for ans in correct_answers]
-        print("nettoyage........")
+        cleaned_correct_answers = [
+            {'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']}
+            for ans in correct_answers
+        ]
+        logger.info("Correct answers: %s", cleaned_correct_answers)
+        logger.info("")
+
         # Extraire le texte et les annotations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
-        print("extracting student.....................")
-        # Ouvrir le document PDF
         doc = fitz.open(pdf_path)
-        # Extraire les annotations spécifiques des réponses des étudiants
         page_annotations = extract_annotations(doc)
-        print("extraction annotatios")
+        logger.info("Page annotations: %s", page_annotations)
+        logger.info("")
 
-        # Associer les annotations des réponses aux questions
         associated_responses = associate_responses_with_questions(grouped_questions, page_annotations)
-        print("association.............")
-        # Comparer les réponses annotées avec les réponses correctes
+        logger.info("Associated responses: %s", associated_responses)
+        logger.info("")
+
         comparison_results = compare_responses(associated_responses, cleaned_correct_answers)
-        print("comparison_results:",comparison_results)
+        logger.info("Comparison results: %s", comparison_results)
+        logger.info("")
 
         return jsonify({'results': comparison_results})
-
     except Exception as e:
-        error_message = str(e)
-        print(f"Error: {error_message}")  # Pour afficher l'erreur dans les logs
-        return jsonify({'error': 'Internal Server Error', 'details': error_message}), 500
+        logger.error("An error occurred in analyze_qcm: %s", str(e))
+        return jsonify({'error': 'An internal error occurred', 'details': str(e)}), 500
+
 
 
