@@ -479,6 +479,71 @@ const saveEditedPdf = async (req, res) => {
   }
 };
 
+async function extractAnnotationsFromPdf(pdfBuffer) {
+  const textractParams = {
+      Document: {
+          Bytes: pdfBuffer,
+      },
+  };
+
+  // Appel à Textract pour analyser le document
+  const textractResponse = await textract.detectDocumentText(textractParams).promise();
+  const blocks = textractResponse.Blocks;
+
+  let annotations = [];
+  let pageAnnotations = {};
+
+  // Variables de configuration pour ajuster les critères
+  const underlineThresholdY = 10; // Seuil en pixels pour détecter un soulignement (modifier selon besoin)
+  const marginX = 5;  // Largeur de capture horizontale pour l'extraction de texte sous une ligne soulignée
+
+  blocks.forEach(block => {
+      if (block.BlockType === "LINE") {
+          const boundingBox = block.Geometry.BoundingBox;
+          const text = block.Text.trim();
+
+          // Ajoute le texte sous forme d'annotation
+          const annotation = {
+              type: "text_line",
+              pageNum: block.Page || 0,
+              boundingBox: boundingBox,
+              text: text
+          };
+
+          // Vérifier si le texte est "souligné" (selon critère de proximité de lignes)
+          // Ex: une ligne de texte suivie immédiatement par une ligne de texte plus basse peut être considérée comme soulignée
+          const nextBlock = getNextBlock(block, blocks);
+          if (nextBlock && isUnderline(block, nextBlock, underlineThresholdY)) {
+              annotation.subtype = "manual_underline";
+          }
+
+          // Ajouter cette annotation à la page appropriée
+          if (!pageAnnotations[annotation.pageNum]) {
+              pageAnnotations[annotation.pageNum] = [];
+          }
+          pageAnnotations[annotation.pageNum].push(annotation);
+      }
+  });
+
+  return pageAnnotations;
+}
+
+// Fonction d'assistance pour obtenir le bloc suivant
+function getNextBlock(currentBlock, blocks) {
+  const currentIndex = blocks.indexOf(currentBlock);
+  if (currentIndex !== -1 && currentIndex + 1 < blocks.length) {
+      return blocks[currentIndex + 1];
+  }
+  return null;
+}
+
+// Fonction d'assistance pour détecter si le texte est souligné en fonction de la proximité verticale
+function isUnderline(currentBlock, nextBlock, thresholdY) {
+  const currentY = currentBlock.Geometry.BoundingBox.Top + currentBlock.Geometry.BoundingBox.Height;
+  const nextY = nextBlock.Geometry.BoundingBox.Top;
+  return Math.abs(currentY - nextY) < thresholdY;
+}
+
 const correctAnswerSheet = async (req, res) => {
   const { answerSheetId } = req.body;
 
@@ -525,8 +590,19 @@ const correctAnswerSheet = async (req, res) => {
     const tempPdfPath = `/tmp/${answerSheetId}.pdf`;
     fs.writeFileSync(tempPdfPath, pdfBytes);
 
+    // Charger un PDF depuis le disque, par exemple
+    const pdfBuffer = fs.readFileSync(tempPdfPath);
+
+    extractAnnotationsFromPdf(pdfBuffer)
+        .then(pageAnnotations => {
+            console.log("Annotations détectées par page : ", pageAnnotations);
+        })
+        .catch(err => {
+            console.error("Erreur lors de l'extraction des annotations : ", err);
+        });
+
     // Créez un objet FormData pour envoyer le fichier
-    const formData = new FormData();
+   /* const formData = new FormData();
     formData.append('pdf', fs.createReadStream(tempPdfPath)); // Ajouter le PDF au formulaire
     formData.append('correct_answers', JSON.stringify(questionsWithAnswers)); // Ajouter d'autres données si nécessaire
 
@@ -537,7 +613,7 @@ const correctAnswerSheet = async (req, res) => {
       }
     });
     const results = response.data.results;
-    console.log("Results: ", results);
+    console.log("Results: ", results);*/
     let totalPoints = 0;
 
     // Charger le PDF avec pdf-lib pour modification
