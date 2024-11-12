@@ -479,69 +479,77 @@ const saveEditedPdf = async (req, res) => {
   }
 };
 
+const AWS = require('aws-sdk');
+const textract = new AWS.Textract();
+
 async function extractAnnotationsFromPdf(pdfBuffer) {
-  const textractParams = {
-      Document: {
-          Bytes: pdfBuffer,
-      },
-  };
+    const textractParams = {
+        Document: {
+            Bytes: pdfBuffer,
+        },
+    };
 
-  // Appel à Textract pour analyser le document
-  const textractResponse = await textract.detectDocumentText(textractParams).promise();
-  const blocks = textractResponse.Blocks;
+    const textractResponse = await textract.detectDocumentText(textractParams).promise();
+    const blocks = textractResponse.Blocks;
 
-  let annotations = [];
-  let pageAnnotations = {};
+    let annotations = [];
+    let pageAnnotations = {};
 
-  // Variables de configuration pour ajuster les critères
-  const underlineThresholdY = 10; // Seuil en pixels pour détecter un soulignement (modifier selon besoin)
-  const marginX = 5;  // Largeur de capture horizontale pour l'extraction de texte sous une ligne soulignée
+    const underlineThresholdY = 10; // Seuil pour détecter un soulignement
+    const ignoreKeywords = [
+        "Num matricule", "Nom et prénom", "Niveau", "Matière",
+        "Année Universitaire", "Examen", "Questions", "Complétez"
+    ];
 
-  blocks.forEach(block => {
-      if (block.BlockType === "LINE") {
-          const boundingBox = block.Geometry.BoundingBox;
-          const text = block.Text.trim();
+    blocks.forEach(block => {
+        if (block.BlockType === "LINE") {
+            const boundingBox = block.Geometry.BoundingBox;
+            const text = block.Text.trim();
 
-          // Ajoute le texte sous forme d'annotation
-          const annotation = {
-              type: "text_line",
-              pageNum: block.Page || 0,
-              boundingBox: boundingBox,
-              text: text
-          };
+            // Vérifier si le texte contient un des mots-clés prédéfinis
+            if (ignoreKeywords.some(keyword => text.includes(keyword))) {
+                return; // Ignorer ce texte
+            }
 
-          // Vérifier si le texte est "souligné" (selon critère de proximité de lignes)
-          // Ex: une ligne de texte suivie immédiatement par une ligne de texte plus basse peut être considérée comme soulignée
-          const nextBlock = getNextBlock(block, blocks);
-          if (nextBlock && isUnderline(block, nextBlock, underlineThresholdY)) {
-              annotation.subtype = "manual_underline";
-          }
+            // Ajoute le texte comme annotation si ce n'est pas un mot-clé
+            const annotation = {
+                type: "text_line",
+                pageNum: block.Page || 0,
+                boundingBox: boundingBox,
+                text: text
+            };
 
-          // Ajouter cette annotation à la page appropriée
-          if (!pageAnnotations[annotation.pageNum]) {
-              pageAnnotations[annotation.pageNum] = [];
-          }
-          pageAnnotations[annotation.pageNum].push(annotation);
-      }
-  });
+            // Détecter un soulignement potentiel
+            const nextBlock = getNextBlock(block, blocks);
+            if (nextBlock && isUnderline(block, nextBlock, underlineThresholdY)) {
+                annotation.subtype = "manual_underline";
+            }
 
-  return pageAnnotations;
+            // Ajouter cette annotation à la page appropriée
+            if (!pageAnnotations[annotation.pageNum]) {
+                pageAnnotations[annotation.pageNum] = [];
+            }
+            pageAnnotations[annotation.pageNum].push(annotation);
+        }
+    });
+
+    return pageAnnotations;
 }
 
-// Fonction d'assistance pour obtenir le bloc suivant
+// Fonction pour obtenir le bloc suivant
 function getNextBlock(currentBlock, blocks) {
-  const currentIndex = blocks.indexOf(currentBlock);
-  if (currentIndex !== -1 && currentIndex + 1 < blocks.length) {
-      return blocks[currentIndex + 1];
-  }
-  return null;
+    const currentIndex = blocks.indexOf(currentBlock);
+    if (currentIndex !== -1 && currentIndex + 1 < blocks.length) {
+        return blocks[currentIndex + 1];
+    }
+    return null;
 }
 
-// Fonction d'assistance pour détecter si le texte est souligné en fonction de la proximité verticale
+// Fonction pour détecter un soulignement
 function isUnderline(currentBlock, nextBlock, thresholdY) {
-  const currentY = currentBlock.Geometry.BoundingBox.Top + currentBlock.Geometry.BoundingBox.Height;
-  const nextY = nextBlock.Geometry.BoundingBox.Top;
-  return Math.abs(currentY - nextY) < thresholdY;
+    const currentY = currentBlock.Geometry.BoundingBox.Top + currentBlock.Geometry.BoundingBox.Height;
+    const nextY = nextBlock.Geometry.BoundingBox.Top;
+    return Math.abs(currentY - nextY) < thresholdY;
 }
 
 const correctAnswerSheet = async (req, res) => {
