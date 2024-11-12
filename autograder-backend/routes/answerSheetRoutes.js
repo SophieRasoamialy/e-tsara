@@ -174,7 +174,7 @@ router.get('/student/:student_id', AnswerSheetController.getAnswerSheetsByStuden
  */
 router.post('/exam/sheet-answer', AnswerSheetController.getAnswerSheetsByExam);
 
-router.post('/exam/sheet-answer/correct', AnswerSheetController.correctAnswerSheet);
+router.post('/exam/sheet-answer/correct',authMiddleware, AnswerSheetController.correctAnswerSheet);
 
 router.post('/corrigees', AnswerSheetController.getSheetsCorrige)
 
