@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(_name_)
 
 # Charger le modèle de sentence-transformers
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -134,12 +134,12 @@ def associate_responses_with_questions(grouped_questions, annotations):
         for annotation in annotation_list:
             # Vérifier que l'annotation est bien un dictionnaire
             if not isinstance(annotation, dict):
-                logger.info(f"Unexpected type for annotation: {type(annotation)} - {annotation}")
+                print(f"Unexpected type for annotation: {type(annotation)} - {annotation}")
                 continue
 
             annotation_rect = annotation.get('rect')
             if not isinstance(annotation_rect, fitz.Rect):
-                logger.info(f"Unexpected type for annotation rect: {type(annotation.get('rect'))}")
+                print(f"Unexpected type for annotation rect: {type(annotation.get('rect'))}")
                 continue
 
             response_text = annotation.get('text_above', '').strip()
@@ -210,7 +210,7 @@ def associate_responses_with_questions(grouped_questions, annotations):
                     'question_rect': rect_to_dict(question_rect_final)
                 })
             else:
-                logger.info(f"No matching question found for annotation on page {page_num}: {annotation}")
+                print(f"No matching question found for annotation on page {page_num}: {annotation}")
 
     return question_response_mapping
  
@@ -226,7 +226,7 @@ def euclidean_distance(point1, point2):
     """
     Calcule la distance euclidienne entre deux points.
     """
-    return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+    return math.sqrt((point1[0] - point2[0]) * 2 + (point1[1] - point2[1]) * 2)
 
 
 def extract_annotations(doc):
@@ -298,18 +298,18 @@ def extract_annotations(doc):
                                     "from": from_point,
                                     "to": to_point,
                                     "page_num": page_num,
-                                    "rect": rect_from,  # Ajouter un champ `rect`
+                                    "rect": rect_from,  # Ajouter un champ rect
                                     "text_above": clean_text(text_above_line),
                                     "subtype": "manual_underline"  # Soulignement manuel
                                 }
                                 annotations.append(line_info)
                             else:
-                                logger.info(f"Pas de texte détecté autour de la ligne à la page {page_num}.")
+                                print(f"Pas de texte détecté autour de la ligne à la page {page_num}.")
                         else:
-                            logger.info(f"Points invalides détectés : from_point={from_point}, to_point={to_point}")
+                            print(f"Points invalides détectés : from_point={from_point}, to_point={to_point}")
 
                 except Exception as e:
-                    logger.info(f"Erreur rencontrée lors du traitement de l'élément : {item}, Erreur : {e}")
+                    print(f"Erreur rencontrée lors du traitement de l'élément : {item}, Erreur : {e}")
 
         # Détection du texte manuscrit
         text_blocks = page.get_text("dict")["blocks"]  # Capturer tout le texte sous forme de dictionnaire
@@ -412,7 +412,7 @@ def separate_question_options(item):
             'type': 'multiple_choice' if options_text else 'open_ended'
         }
     else:
-        logger.info("Erreur : format invalide ou clé 'question' manquante dans l'item")
+        print("Erreur : format invalide ou clé 'question' manquante dans l'item")
         return None
 def compare_responses(annotated, correct_answers):
     results = []
@@ -481,24 +481,24 @@ def analyze_qcm():
 
         # Extraire le texte et les annotations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
-        logger.info("grouped questions>>>>>> %s", grouped_questions)
-        logger.info("")
+        print("grouped questions>>>>>>", grouped_questions)
+        print("")
         # Ouvrir le document PDF
         doc = fitz.open(pdf_path)
 
         # Extraire les annotations spécifiques des réponses des étudiants
         page_annotations = extract_annotations(doc)
-        logger.info("page annotations >>>>>>> %s", page_annotations)
-        logger.info("")
+        print("page annotations >>>>>>>", page_annotations)
+        print("")
 
         # Associer les annotations des réponses aux questions
         associated_responses = associate_responses_with_questions(grouped_questions, page_annotations)
-        logger.info("associated_responses>>>>>>>>> %s ", associated_responses)
-        logger.info("")
+        print("associated_responses>>>>>>>>>", associated_responses)
+        print("")
 
         # Comparer les réponses annotées avec les réponses correctes
         comparison_results = compare_responses(associated_responses, cleaned_correct_answers)
-        logger.info("comparison_results:%s",comparison_results)
+        print("comparison_results:",comparison_results)
 
         return jsonify({'results': comparison_results})
 
