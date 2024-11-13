@@ -264,7 +264,8 @@ def extract_annotations(doc):
         for drawing in drawings:
             for item in drawing['items']:
                 try:
-                    if item[0] == 'l':  # Lignes pour les soulignements
+                    # Vérifier que l'item est bien structuré pour l'unpacking
+                    if item[0] == 'l' and len(item) > 2:  # Lignes pour les soulignements
                         from_point, to_point = item[1], item[2]
                         padding = 5
                         rect_from = fitz.Rect(
@@ -335,7 +336,6 @@ def extract_annotations(doc):
         page_annotations[page_num] = annotations
 
     return page_annotations
-
 
 def separate_question_options(item):
     # Vérifiez que l'item est un dictionnaire contenant une clé 'question'
