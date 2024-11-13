@@ -480,79 +480,6 @@ const saveEditedPdf = async (req, res) => {
 };
 
 
-async function extractAnnotationsFromPdf(pdfBuffer) {
-    const textractParams = {
-        Document: {
-            Bytes: pdfBuffer,
-        },
-    };
-
-    const textractResponse = await textract.detectDocumentText(textractParams).promise();
-    const blocks = textractResponse.Blocks;
-
-    let annotations = [];
-    let pageAnnotations = {};
-
-    // Critères pour ajuster la détection d'annotations manuelles
-    const underlineThresholdY = 10;
-    const ignoreKeywords = [
-        "Num matricule", "Nom et prénom", "Niveau", "Matière",
-        "Année Universitaire", "Examen", "Questions", "Soulignez", "Complétez"
-    ];
-    const questionPatterns = /^\d+\.\s|^(A|B|C|D)\)/; // Pour ignorer les questions au format 1., A), etc.
-
-    blocks.forEach(block => {
-        if (block.BlockType === "LINE") {
-            const boundingBox = block.Geometry.BoundingBox;
-            const text = block.Text.trim();
-
-            // Filtrer les blocs qui correspondent aux mots-clés ou aux motifs de question
-            if (ignoreKeywords.some(keyword => text.includes(keyword)) || questionPatterns.test(text)) {
-                return;
-            }
-
-            // Ajouter l'annotation si elle semble être manuelle (pas dans les textes ignorés)
-            const annotation = {
-                type: "text_line",
-                pageNum: block.Page || 0,
-                boundingBox: boundingBox,
-                text: text
-            };
-
-            // Détecter si un soulignement est manuel
-            const nextBlock = getNextBlock(block, blocks);
-            if (nextBlock && isUnderline(block, nextBlock, underlineThresholdY)) {
-                annotation.subtype = "manual_underline";
-            }
-
-            // Ajouter l'annotation seulement si elle n'est pas liée aux questions
-            if (!pageAnnotations[annotation.pageNum]) {
-                pageAnnotations[annotation.pageNum] = [];
-            }
-            pageAnnotations[annotation.pageNum].push(annotation);
-        }
-    });
-
-    return pageAnnotations;
-}
-
-// Fonction d'assistance pour obtenir le bloc suivant
-function getNextBlock(currentBlock, blocks) {
-    const currentIndex = blocks.indexOf(currentBlock);
-    if (currentIndex !== -1 && currentIndex + 1 < blocks.length) {
-        return blocks[currentIndex + 1];
-    }
-    return null;
-}
-
-// Fonction d'assistance pour détecter si le texte est souligné en fonction de la proximité verticale
-function isUnderline(currentBlock, nextBlock, thresholdY) {
-    const currentY = currentBlock.Geometry.BoundingBox.Top + currentBlock.Geometry.BoundingBox.Height;
-    const nextY = nextBlock.Geometry.BoundingBox.Top;
-    return Math.abs(currentY - nextY) < thresholdY;
-}
-
-
 const correctAnswerSheet = async (req, res) => {
   const { answerSheetId } = req.body;
 
@@ -602,16 +529,9 @@ const correctAnswerSheet = async (req, res) => {
     // Charger un PDF depuis le disque, par exemple
     const pdfBuffer = fs.readFileSync(tempPdfPath);
 
-    extractAnnotationsFromPdf(pdfBuffer)
-        .then(pageAnnotations => {
-            console.log("Annotations détectées par page : ", pageAnnotations);
-        })
-        .catch(err => {
-            console.error("Erreur lors de l'extraction des annotations : ", err);
-        });
 
     // Créez un objet FormData pour envoyer le fichier
-   /* const formData = new FormData();
+    const formData = new FormData();
     formData.append('pdf', fs.createReadStream(tempPdfPath)); // Ajouter le PDF au formulaire
     formData.append('correct_answers', JSON.stringify(questionsWithAnswers)); // Ajouter d'autres données si nécessaire
 
@@ -622,7 +542,7 @@ const correctAnswerSheet = async (req, res) => {
       }
     });
     const results = response.data.results;
-    console.log("Results: ", results);*/
+    console.log("Results: ", results);
     let totalPoints = 0;
 
     // Charger le PDF avec pdf-lib pour modification
