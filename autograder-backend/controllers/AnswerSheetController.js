@@ -526,8 +526,6 @@ const correctAnswerSheet = async (req, res) => {
     const tempPdfPath = `/tmp/${answerSheetId}.pdf`;
     fs.writeFileSync(tempPdfPath, pdfBytes);
 
-    // Charger un PDF depuis le disque, par exemple
-    const pdfBuffer = fs.readFileSync(tempPdfPath);
 
 
     // Créez un objet FormData pour envoyer le fichier
