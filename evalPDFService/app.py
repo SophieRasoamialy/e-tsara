@@ -246,115 +246,89 @@ def euclidean_distance(point1, point2):
 def extract_annotations(doc):
     page_annotations = {}
     symbols_to_check = ["x", "X", "✓"]
-    blue_color_threshold = (0.1, 0.1, 0.9)  # Seuil pour détecter la couleur bleue
+    stop_symbols = ["❍", "◯", "❑", "⬜"]
+    tolerance = 0.5  # Tolérance pour détecter différentes nuances de bleu
 
     for page_num in range(len(doc)):
         page = doc.load_page(page_num)
         annotations = []
-
-        # Détection des lignes bleues (soulignements)
         drawings = page.get_drawings()
+        
+        # Détection des annotations manuelles
         for drawing in drawings:
-            color = drawing.get("color", (0, 0, 0))  # Récupérer la couleur du dessin
-
-            # Vérifier si la couleur est proche du bleu
-            is_blue_line = (
-                abs(color[0] - blue_color_threshold[0]) < 0.2 and
-                abs(color[1] - blue_color_threshold[1]) < 0.2 and
-                abs(color[2] - blue_color_threshold[2]) > 0.8
-            )
-
-            if is_blue_line:  # Filtrer uniquement les lignes bleues
-                for item in drawing['items']:
-                    try:
-                        if item[0] == 'l':  # Détection des lignes (soulignements)
-                            from_point = item[1]
-                            to_point = item[2]
-                            
-                            # Créer un rectangle autour de la ligne pour capturer le texte au-dessus
-                            padding = 5
-                            rect_from = fitz.Rect(
-                                min(from_point.x, to_point.x) - padding,
-                                min(from_point.y, to_point.y) - padding,
-                                max(from_point.x, to_point.x) + padding,
-                                max(from_point.y, to_point.y) + padding
-                            )
-                            
-                            # Extraire le texte au-dessus de la ligne
-                            text_above_line = clean_text(page.get_text("text", clip=rect_from))
-                            
-                            if text_above_line:
-                                line_info = {
-                                    "type": "manual_line",
-                                    "from": from_point,
-                                    "to": to_point,
-                                    "page_num": page_num,
-                                    "rect": rect_from,
-                                    "text_above": text_above_line,
-                                    "subtype": "manual_underline"
-                                }
-                                annotations.append(line_info)
-
-                    except Exception as e:
-                        print(f"Erreur rencontrée lors du traitement de l'élément : {item}, Erreur : {e}")
-
-        # Détection du texte en bleu et des symboles cochés bleus
-        text_blocks = page.get_text("dict")["blocks"]
-        for block in text_blocks:
-            if block["type"] == 0:  # Texte normal ou manuscrit
-                for line in block["lines"]:
-                    for span in line["spans"]:
-                        text = clean_text(span["text"])
-
-                        # Détecter les textes en bleu et les symboles cochés
-                        color = span.get("color", (0, 0, 0))
-                        is_blue = (
-                            abs(color[0] - blue_color_threshold[0]) < 0.2 and
-                            abs(color[1] - blue_color_threshold[1]) < 0.2 and
-                            abs(color[2] - blue_color_threshold[2]) > 0.8
+            for item in drawing['items']:
+                try:
+                    if item[0] == 'l':  # Lignes pour les soulignements
+                        from_point, to_point = item[1], item[2]
+                        padding = 5
+                        rect_from = fitz.Rect(
+                            min(from_point.x, to_point.x) - padding,
+                            min(from_point.y, to_point.y) - padding,
+                            max(from_point.x, to_point.x) + padding,
+                            max(from_point.y, to_point.y) + padding
                         )
+                        text_above = clean_text(page.get_text("text", clip=rect_from))
+                        line_color = item[3] if len(item) > 3 else None
+                        if line_color and is_blue_color(line_color):
+                            annotations.append({
+                                "type": "manual_line",
+                                "from": from_point,
+                                "to": to_point,
+                                "page_num": page_num,
+                                "rect": rect_from,
+                                "text_above": text_above,
+                                "subtype": "manual_underline"
+                            })
 
-                        if is_blue:
-                            # Vérifier si le texte est un symbole coché
-                            if any(symbol in text for symbol in symbols_to_check):
-                                detected_symbol = [symbol for symbol in symbols_to_check if symbol in text][0]
-                                symbol_info = {
-                                    "type": "manual_check",
-                                    "symbol": detected_symbol,
-                                    "rect": fitz.Rect(span["bbox"]),
-                                    "page_num": page_num
-                                }
+                except Exception as e:
+                    print(f"Erreur : {e}")
 
-                                # Extraire le texte à droite du symbole jusqu'à 500 pixels
-                                capture_increment = 30
-                                current_x = symbol_info["rect"][2]
-                                y0, y1 = symbol_info["rect"][1] + 5, symbol_info["rect"][3] - 5
-                                max_capture_width = 500
-                                full_text = ""
+        # Détection des cases cochées en bleu
+        text_dict = page.get_text("dict")
+        if text_dict and "blocks" in text_dict:
+            text_blocks = text_dict["blocks"]
+            for block in text_blocks:
+                if block["type"] == 0:
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            text = clean_text(span["text"])
+                            color = span.get("color", None)
+                            
+                            # Vérifie si la couleur est une nuance de bleu
+                            if color and is_blue_color(color, tolerance=tolerance):
+                                # Détecte les symboles cochés
+                                if any(symbol in text for symbol in symbols_to_check):
+                                    symbol_info = {
+                                        "type": "manual_check",
+                                        "symbol": [s for s in symbols_to_check if s in text][0],
+                                        "text_symbol": text,
+                                        "rect": fitz.Rect(span["bbox"]),
+                                        "page_num": page_num
+                                    }
+                                    # Capturer le texte à droite du symbole
+                                    full_text = ""
+                                    capture_increment = 30
+                                    current_x = symbol_info["rect"][2]
+                                    y0, y1 = symbol_info["rect"][1] + 5, symbol_info["rect"][3] - 5
+                                    max_capture_width = 500
 
-                                while current_x < symbol_info["rect"][2] + max_capture_width:
-                                    text_to_right_rect = fitz.Rect(current_x, y0, current_x + capture_increment, y1)
-                                    text_to_right = clean_text(page.get_text("text", clip=text_to_right_rect))
-                                    full_text += text_to_right
-                                    current_x += capture_increment
+                                    while current_x < symbol_info["rect"][2] + max_capture_width:
+                                        text_to_right_rect = fitz.Rect(current_x, y0, current_x + capture_increment, y1)
+                                        text_to_right = clean_text(page.get_text("text", clip=text_to_right_rect))
+                                        if any(stop_symbol in text_to_right for stop_symbol in stop_symbols):
+                                            break
+                                        full_text += text_to_right
+                                        current_x += capture_increment
 
-                                symbol_info["text_right"] = full_text
-                                annotations.append(symbol_info)
+                                    symbol_info["text"] = full_text.strip()
+                                    annotations.append(symbol_info)
 
-                            else:
-                                # Si c'est un texte en bleu sans symbole
-                                blue_text_info = {
-                                    "type": "blue_text",
-                                    "content": text,
-                                    "rect": fitz.Rect(span["bbox"]),
-                                    "page_num": page_num,
-                                }
-                                annotations.append(blue_text_info)
+        else:
+            print(f"Aucun bloc de texte trouvé sur la page {page_num}. Vérifiez le contenu de la page.")
 
         page_annotations[page_num] = annotations
 
     return page_annotations
-
 
 
 def separate_question_options(item):
