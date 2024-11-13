@@ -243,6 +243,12 @@ def euclidean_distance(point1, point2):
     """
     return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
+def is_blue_color(color, tolerance=0.5):
+    """Détecte si une couleur est une nuance de bleu."""
+    r, g, b = color
+    # Le bleu est significativement plus élevé que rouge et vert
+    return b > g and b > r and (b > 0.5 or abs(b - r) > tolerance)
+
 def extract_annotations(doc):
     page_annotations = {}
     symbols_to_check = ["x", "X", "✓"]
