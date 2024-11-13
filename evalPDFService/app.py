@@ -481,24 +481,24 @@ def analyze_qcm():
 
         # Extraire le texte et les annotations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
-        logger.info("grouped questions>>>>>>", grouped_questions)
+        logger.info("grouped questions>>>>>> %s", grouped_questions)
         logger.info("")
         # Ouvrir le document PDF
         doc = fitz.open(pdf_path)
 
         # Extraire les annotations spécifiques des réponses des étudiants
         page_annotations = extract_annotations(doc)
-        logger.info("page annotations >>>>>>>", page_annotations)
+        logger.info("page annotations >>>>>>> %s", page_annotations)
         logger.info("")
 
         # Associer les annotations des réponses aux questions
         associated_responses = associate_responses_with_questions(grouped_questions, page_annotations)
-        logger.info("associated_responses>>>>>>>>>", associated_responses)
+        logger.info("associated_responses>>>>>>>>> %s ", associated_responses)
         logger.info("")
 
         # Comparer les réponses annotées avec les réponses correctes
         comparison_results = compare_responses(associated_responses, cleaned_correct_answers)
-        logger.info("comparison_results:",comparison_results)
+        logger.info("comparison_results:%s",comparison_results)
 
         return jsonify({'results': comparison_results})
 
