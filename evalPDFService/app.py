@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 # Charger le modèle de sentence-transformers
 model = SentenceTransformer('all-MiniLM-L6-v2')
