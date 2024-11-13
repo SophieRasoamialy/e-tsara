@@ -526,8 +526,6 @@ const correctAnswerSheet = async (req, res) => {
     const tempPdfPath = `/tmp/${answerSheetId}.pdf`;
     fs.writeFileSync(tempPdfPath, pdfBytes);
 
-
-
     // Créez un objet FormData pour envoyer le fichier
     const formData = new FormData();
     formData.append('pdf', fs.createReadStream(tempPdfPath)); // Ajouter le PDF au formulaire
