@@ -331,7 +331,7 @@ const uploadAndSaveAnswerSheets = async (req, res) => {
           Bytes: file.buffer,
         },
       };
-      console.log("textractParams", textractParams);
+      //console.log("textractParams", textractParams);
       const textractResponse = await textract
         .detectDocumentText(textractParams)
         .promise();
@@ -339,7 +339,7 @@ const uploadAndSaveAnswerSheets = async (req, res) => {
       const extractedText = textractResponse.Blocks.map(
         (block) => block.Text
       ).join(" ");
-      console.log("extractedText: ", extractedText);
+      //console.log("extractedText: ", extractedText);
 
       // Supposons que le matricule de l'étudiant soit un nombre à 4 chiffres
       const matriculeRegex = /\b\d{4}\b/;
