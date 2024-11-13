@@ -71,7 +71,11 @@ router.get("/", SubjectController.getSubjects);
  *       404:
  *         description: Aucun classe trouvée pour cet enseignant
  */
-
+router.get(
+  "/me/classes",
+  authMiddleware,
+  SubjectController.getClassesForAuthenticatedTeacher
+);
 /**
  * @swagger
  * /subjects/me/classes/{class_id}:
