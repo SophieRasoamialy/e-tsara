@@ -129,23 +129,22 @@ def extract_text_and_annotations(pdf_path):
 
 def associate_responses_with_questions(grouped_questions, annotations):
     question_response_mapping = []
-    question_rect_final = None
 
     for page_num, annotation_list in annotations.items():
         for annotation in annotation_list:
-            question_rect_final = None
             # Vérifier que l'annotation est bien un dictionnaire
             if not isinstance(annotation, dict):
-                print(f"Unexpected type for annotation: {type(annotation)} - {annotation}")
-                continue  # Sauter cet élément s'il n'est pas un dictionnaire
+                logger.info(f"Unexpected type for annotation: {type(annotation)} - {annotation}")
+                continue
 
             annotation_rect = annotation.get('rect')
             if not isinstance(annotation_rect, fitz.Rect):
-                print(f"Unexpected type for annotation rect: {type(annotation.get('rect'))}")
+                logger.info(f"Unexpected type for annotation rect: {type(annotation.get('rect'))}")
                 continue
 
-            response_text = annotation.get('text_above', '').strip()  # Le texte au-dessus de l'annotation
+            response_text = annotation.get('text_above', '').strip()
             found_question = None
+            question_rect_final = None  # Initialisation de question_rect_final
            
             # Gestion des annotations de type 'manual_check' (cases cochées)
             if annotation['type'] == 'manual_check':
@@ -153,10 +152,8 @@ def associate_responses_with_questions(grouped_questions, annotations):
                     for question in grouped_questions:
                         if question['type'] == 'multiple_choice':
                             question_rect = fitz.Rect(question['bbox'])
-                            # Vérifier si la question est proche de l'annotation (au-dessus ou à gauche)
-                            question_center = get_center(question_rect)
+                            # Vérifier si la question est proche de l'annotation
                             for option in question['options']:
-                                # Associer l'option cochée à la question si elle correspond
                                 if normalize_text(annotation['text']) in normalize_text(option):
                                     found_question = question
                                     question_rect_final = question_rect
@@ -168,12 +165,10 @@ def associate_responses_with_questions(grouped_questions, annotations):
             elif annotation['type'] == 'manual_line':
                 normalized_response_text = normalize_text(response_text)
                 if len(response_text) > 0:
-                    # Chercher d'abord une correspondance avec une question à choix multiples
+                    # Chercher une correspondance avec une question à choix multiples
                     for question in grouped_questions:
                         if question['type'] == 'multiple_choice':
                             question_rect = fitz.Rect(question['bbox'])
-                            # Vérifier si la question est proche de l'annotation (au-dessus ou à gauche)
-                            question_center = get_center(question_rect)
                             for option in question['options']:
                                 if normalized_response_text in normalize_text(option):
                                     found_question = question
@@ -182,53 +177,43 @@ def associate_responses_with_questions(grouped_questions, annotations):
                         if found_question:
                             break
 
-                    # Si aucune correspondance n'est trouvée dans une question multiple-choice,
-                    # chercher une question ouverte (open_ended) avec des critères géographiques
+                    # Si aucune correspondance n'est trouvée, chercher une question ouverte
                     if not found_question:
                         max_y = -float('inf')
                         annotation_rect = fitz.Rect(annotation['rect'])
                         annotation_center = get_center((annotation_rect.x0, annotation_rect.y0, annotation_rect.x1, annotation_rect.y1))
-                        max_distance=100
+                        max_distance = 100
                         min_distance = float('inf')
                         
                         for question in grouped_questions:
                             if question['type'] == 'open_ended' and question['page_num'] == annotation['page_num']:
                                 question_rect = fitz.Rect(question['bbox'])
-                                # Vérifier si la question est proche de l'annotation (au-dessus ou à gauche)
                                 question_center = get_center(question_rect)
-
-                                # Calculer la distance entre le centre de l'annotation et celui de la question
                                 distance = euclidean_distance(annotation_center, question_center)
 
-                                # Vérifier si la question est plus proche que la précédente trouvée
                                 if distance < min_distance and distance <= max_distance:
                                     min_distance = distance
                                     found_question = question
-                                    #print(f"Found question near annotation with distance: {found_question['question']}")
-
+                                    question_rect_final = question_rect
                                 elif question_rect.y1 < annotation_rect.y0:
                                     if question_rect.y1 > max_y:
                                         max_y = question_rect.y1
                                         found_question = question
                                         question_rect_final = question_rect
-                                        #print(f"Found question above annotation: {found_question['question']}")
             
-           
-            # Ajouter la correspondance question-réponse si une correspondance est trouvée
-            if found_question:
-                # Associer correctement la réponse avec l'annotation ou le texte coché
+            # Ajouter la correspondance question-réponse uniquement si une question et son rectangle sont trouvés
+            if found_question and question_rect_final:
                 question_response_mapping.append({
                     'question': found_question['question'],
                     'response': response_text if annotation['type'] != 'manual_check' else annotation['text'],
                     'page_num': page_num,
-                    'question_rect': rect_to_dict(question_rect_final)  # Convertir question_rect en dictionnaire
+                    'question_rect': rect_to_dict(question_rect_final)
                 })
             else:
-                # Message d'erreur pour déboguer les réponses non associées
-                print(f"No matching question found for annotation on page {page_num}: {annotation}")
+                logger.info(f"No matching question found for annotation on page {page_num}: {annotation}")
 
     return question_response_mapping
-  
+ 
 def get_center(rect):
     """
     Calcule le centre d'un rectangle.
@@ -243,95 +228,167 @@ def euclidean_distance(point1, point2):
     """
     return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
-def is_blue_color(color, tolerance=0.5):
-    """Détecte si une couleur est une nuance de bleu."""
-    r, g, b = color
-    # Le bleu est significativement plus élevé que rouge et vert
-    return b > g and b > r and (b > 0.5 or abs(b - r) > tolerance)
 
 def extract_annotations(doc):
     page_annotations = {}
-    symbols_to_check = ["x", "X", "✓"]
-    stop_symbols = ["❍", "◯", "❑", "⬜"]
-    tolerance = 0.5  # Tolérance pour détecter différentes nuances de bleu
+    # Liste des symboles cochés à rechercher
+    symbols_to_check = ["x","X", "✓"]
 
     for page_num in range(len(doc)):
         page = doc.load_page(page_num)
         annotations = []
+
+        # Détecter les dessins manuels (rectangles, lignes et cercles)
         drawings = page.get_drawings()
-        
-        # Détection des annotations manuelles
         for drawing in drawings:
             for item in drawing['items']:
                 try:
-                    # Vérifier que l'item est bien structuré pour l'unpacking
-                    if item[0] == 'l' and len(item) > 2:  # Lignes pour les soulignements
-                        from_point, to_point = item[1], item[2]
-                        padding = 5
-                        rect_from = fitz.Rect(
-                            min(from_point.x, to_point.x) - padding,
-                            min(from_point.y, to_point.y) - padding,
-                            max(from_point.x, to_point.x) + padding,
-                            max(from_point.y, to_point.y) + padding
-                        )
-                        text_above = clean_text(page.get_text("text", clip=rect_from))
-                        line_color = item[3] if len(item) > 3 else None
-                        if line_color and is_blue_color(line_color):
-                            annotations.append({
-                                "type": "manual_line",
-                                "from": from_point,
-                                "to": to_point,
+                    # Détection des rectangles (encadrements manuels)
+                    if item[0] == 're':  # Détection des rectangles manuels
+                        if isinstance(item[1], (tuple, list)) and len(item[1]) == 4:
+                            rect_info = {
+                                "type": "manual_box",  # Encadrement manuel détecté
+                                "rect": fitz.Rect(item[1]),  # Convertir item[1] en objet Rect valide
                                 "page_num": page_num,
-                                "rect": rect_from,
-                                "text_above": text_above,
-                                "subtype": "manual_underline"
-                            })
+                            }
+
+                            # Extraire le texte à l'intérieur du rectangle
+                            text_inside = page.get_text("text", clip=rect_info["rect"])
+                            if clean_text(text_inside):
+                                rect_info["content"] = clean_text(text_inside)
+
+                            # Ajouter à la liste des annotations
+                            annotations.append(rect_info)
+
+                    # Détection des ellipses (encadrements circulaires manuels)
+                    elif item[0] == 'el':  # Détection des ellipses ou cercles
+                        ellipse_rect = fitz.Rect(item[1])  # Extraire la boîte englobante de l'ellipse
+                        ellipse_info = {
+                            "type": "manual_ellipse",  # Encadrement circulaire détecté
+                            "rect": ellipse_rect,
+                            "page_num": page_num,
+                        }
+
+                        # Extraire le texte à l'intérieur de l'ellipse
+                        text_inside = page.get_text("text", clip=ellipse_info["rect"])
+                        if clean_text(text_inside):
+                            ellipse_info["content"] = clean_text(text_inside)
+
+                        # Ajouter à la liste des annotations
+                        annotations.append(ellipse_info)
+
+                    elif item[0] == 'l':  # Détection des lignes (soulignements manuels)
+                        from_point = item[1]
+                        to_point = item[2]
+
+                        if isinstance(from_point, fitz.Point) and isinstance(to_point, fitz.Point):
+                            padding = 5  # Augmenter le padding pour capturer plus de texte
+                            # Créer un rectangle autour de la ligne
+                            rect_from = fitz.Rect(min(from_point.x, to_point.x) - padding,
+                                                  min(from_point.y, to_point.y) - padding,
+                                                  max(from_point.x, to_point.x) + padding,
+                                                  max(from_point.y, to_point.y) + padding)
+
+                            # Extraire le texte au-dessus de la ligne
+                            text_above_line = page.get_text("text", clip=rect_from)
+
+                            if clean_text(text_above_line):
+                                line_info = {
+                                    "type": "manual_line",  # Ligne manuelle
+                                    "from": from_point,
+                                    "to": to_point,
+                                    "page_num": page_num,
+                                    "rect": rect_from,  # Ajouter un champ `rect`
+                                    "text_above": clean_text(text_above_line),
+                                    "subtype": "manual_underline"  # Soulignement manuel
+                                }
+                                annotations.append(line_info)
+                            else:
+                                logger.info(f"Pas de texte détecté autour de la ligne à la page {page_num}.")
+                        else:
+                            logger.info(f"Points invalides détectés : from_point={from_point}, to_point={to_point}")
 
                 except Exception as e:
-                    print(f"Erreur : {e}")
+                    logger.info(f"Erreur rencontrée lors du traitement de l'élément : {item}, Erreur : {e}")
 
-        # Détection des cases cochées en bleu
-        text_dict = page.get_text("dict")
-        if text_dict and "blocks" in text_dict:
-            text_blocks = text_dict["blocks"]
-            for block in text_blocks:
-                if block["type"] == 0:
-                    for line in block["lines"]:
-                        for span in line["spans"]:
-                            text = clean_text(span["text"])
-                            color = span.get("color", None)
+        # Détection du texte manuscrit
+        text_blocks = page.get_text("dict")["blocks"]  # Capturer tout le texte sous forme de dictionnaire
+
+        # Liste des caractères ou symboles représentant de nouvelles options de réponse (par ex. "❍", "•", etc.)
+        stop_symbols = ["❍", "◯", "❑", "⬜"]
+
+        for block in text_blocks:
+            if block["type"] == 0:  # Type 0 = texte imprimé normal
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        text = clean_text(span["text"])
+                        
+                        # Rechercher les symboles cochés "X" ou "✓"
+                        if any(symbol in text for symbol in symbols_to_check):
+                            # Extraire le symbole détecté
+                            detected_symbol = [symbol for symbol in symbols_to_check if symbol in text][0]
                             
-                            # Vérifie si la couleur est une nuance de bleu
-                            if color and is_blue_color(color, tolerance=tolerance):
-                                # Détecte les symboles cochés
-                                if any(symbol in text for symbol in symbols_to_check):
-                                    symbol_info = {
-                                        "type": "manual_check",
-                                        "symbol": [s for s in symbols_to_check if s in text][0],
-                                        "text_symbol": text,
-                                        "rect": fitz.Rect(span["bbox"]),
-                                        "page_num": page_num
-                                    }
-                                    # Capturer le texte à droite du symbole
-                                    full_text = ""
-                                    capture_increment = 30
-                                    current_x = symbol_info["rect"][2]
-                                    y0, y1 = symbol_info["rect"][1] + 5, symbol_info["rect"][3] - 5
-                                    max_capture_width = 500
+                            # Si le symbole détecté est 'x'
+                            if text == 'x':
+                                # Initialiser symbol_info avec les informations disponibles
+                                symbol_info = {
+                                    "type": "manual_check",
+                                    "symbol": detected_symbol,
+                                    "text_symbol": text,  # Le texte contenant le symbole
+                                    "rect": fitz.Rect(span["bbox"]),  # Coordonnées de la zone du texte
+                                    "page_num": page.number
+                                }
 
-                                    while current_x < symbol_info["rect"][2] + max_capture_width:
-                                        text_to_right_rect = fitz.Rect(current_x, y0, current_x + capture_increment, y1)
-                                        text_to_right = clean_text(page.get_text("text", clip=text_to_right_rect))
-                                        if any(stop_symbol in text_to_right for stop_symbol in stop_symbols):
-                                            break
-                                        full_text += text_to_right
-                                        current_x += capture_increment
+                                # Initialiser le texte complet capturé à droite du symbole
+                                full_text = ""
+                                capture_increment = 30  # Largeur de capture pour chaque segment
+                                current_x = symbol_info["rect"][2]  # Coordonnée x1 (droite du symbole "x")
+                                y0, y1 = symbol_info["rect"][1] + 5, symbol_info["rect"][3] - 5  # Limiter la hauteur de capture
+                                max_capture_width = 500  # Largeur maximale à parcourir à droite
 
-                                    symbol_info["text"] = full_text.strip()
-                                    annotations.append(symbol_info)
+                                # Boucle pour capturer le texte à droite du symbole
+                                while current_x < symbol_info["rect"][2] + max_capture_width:
+                                    # Définir une nouvelle zone de capture pour chaque segment
+                                    text_to_right_rect = fitz.Rect(
+                                        current_x,  # Coordonnée x1 (droite de la zone précédente)
+                                        y0,  # y0 (limite supérieure)
+                                        current_x + capture_increment,  # Étendre légèrement à droite
+                                        y1  # y1 (limite inférieure)
+                                    )
+                                    
+                                    # Extraire le texte dans cette petite zone
+                                    text_to_right = clean_text(page.get_text("text", clip=text_to_right_rect))
+                                    
+                                    # Arrêter la capture si un symbole d'option est détecté
+                                    if any(stop_symbol in text_to_right for stop_symbol in stop_symbols):
+                                        break  # Arrêter la capture si une nouvelle option est détectée
 
-        else:
-            print(f"Aucun bloc de texte trouvé sur la page {page_num}. Vérifiez le contenu de la page.")
+                                    # Ajouter le texte capturé au texte complet
+                                    full_text += text_to_right
+                                    
+                                    # Passer à la prochaine section de capture
+                                    current_x += capture_increment
+
+                                # Correction des mots coupés à la fin
+                                if full_text.endswith(" "):
+                                    # Si le texte se termine par un espace, il est possible que le mot soit coupé
+                                    extended_capture_rect = fitz.Rect(
+                                        current_x,  # Continuer la capture à droite
+                                        y0,  # y0 (limite supérieure)
+                                        current_x + capture_increment,  # Capturer une petite section supplémentaire
+                                        y1  # y1 (limite inférieure)
+                                    )
+                                    additional_text = clean_text(page.get_text("text", clip=extended_capture_rect))
+                                    full_text += additional_text  # Ajouter le texte supplémentaire si nécessaire
+                                
+                                # Nettoyer les répétitions de caractères (comme "dd" ou "oo")
+                                def remove_repetitions(text):
+                                    return re.sub(r'(.)\1+', r'\1', text)
+                                
+                                # Nettoyer le texte final capturé
+                                symbol_info["text"] = remove_repetitions(clean_text(full_text))
+                                # Ajouter l'annotation avec le texte complet
+                                annotations.append(symbol_info)
 
         page_annotations[page_num] = annotations
 
@@ -355,7 +412,7 @@ def separate_question_options(item):
             'type': 'multiple_choice' if options_text else 'open_ended'
         }
     else:
-        print("Erreur : format invalide ou clé 'question' manquante dans l'item")
+        logger.info("Erreur : format invalide ou clé 'question' manquante dans l'item")
         return None
 def compare_responses(annotated, correct_answers):
     results = []
@@ -382,7 +439,7 @@ def compare_responses(annotated, correct_answers):
                     similarity = util.pytorch_cos_sim(user_encoded, correct_encoded).item()
 
                     # Si la similarité est élevée, on considère que la réponse est correcte
-                    is_correct = similarity > 0.8  # Vous pouvez ajuster le seuil
+                    is_correct = similarity > 0.7  # Vous pouvez ajuster le seuil
                     rect = annotated_data['question_rect']
                     
                     results.append({
@@ -417,33 +474,34 @@ def analyze_qcm():
         pdf_file.save(pdf_path)
 
         if not pdf_path or not correct_answers:
-            logger.warning("Missing pdf_path or correct_answers")
             return jsonify({'error': 'Missing pdf_path or correct_answers'}), 400
 
         # Nettoyer les réponses correctes
-        cleaned_correct_answers = [
-            {'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']}
-            for ans in correct_answers
-        ]
-        logger.info("Correct answers: %s", cleaned_correct_answers)
-        logger.info("")
+        cleaned_correct_answers = [{'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']} for ans in correct_answers]
 
         # Extraire le texte et les annotations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
+        logger.info("grouped questions>>>>>>", grouped_questions)
+        logger.info("")
+        # Ouvrir le document PDF
         doc = fitz.open(pdf_path)
+
+        # Extraire les annotations spécifiques des réponses des étudiants
         page_annotations = extract_annotations(doc)
-        logger.info("Page annotations: %s", page_annotations)
+        logger.info("page annotations >>>>>>>", page_annotations)
         logger.info("")
 
+        # Associer les annotations des réponses aux questions
         associated_responses = associate_responses_with_questions(grouped_questions, page_annotations)
-        logger.info("Associated responses: %s", associated_responses)
+        logger.info("associated_responses>>>>>>>>>", associated_responses)
         logger.info("")
 
+        # Comparer les réponses annotées avec les réponses correctes
         comparison_results = compare_responses(associated_responses, cleaned_correct_answers)
-        logger.info("Comparison results: %s", comparison_results)
-        logger.info("")
+        logger.info("comparison_results:",comparison_results)
 
         return jsonify({'results': comparison_results})
+
     except Exception as e:
         logger.error("An error occurred in analyze_qcm: %s", str(e))
         return jsonify({'error': 'An internal error occurred', 'details': str(e)}), 500
