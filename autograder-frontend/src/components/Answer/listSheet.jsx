@@ -122,17 +122,16 @@ const ListCopy = () => {
     try {
       for (let i = 0; i < pdfUrls.length; i++) {
         const pdf = pdfUrls[i];
-        await fetch(
+        await axios.post(
           `${apiUrl}/api/feuilles-reponses/exam/sheet-answer/correct`,
+          { answerSheetId: pdf.answerSheetId },  
           {
-            method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ answerSheetId: pdf.answerSheetId }),
           }
-        );
+        );        
         setProgress(((i + 1) / pdfUrls.length) * 100);
       }
       await MySwal.fire({
