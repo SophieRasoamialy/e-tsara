@@ -173,7 +173,7 @@ def compare_responses(annotated_responses, correct_answers, similarity_threshold
             })
     
     return results
-
+ 
 @app.route('/analyze_qcm', methods=['POST'])
 def analyze_qcm():
     try:
@@ -181,7 +181,7 @@ def analyze_qcm():
         correct_answers = json.loads(request.form.get('correct_answers'))
         pdf_path = "/tmp/tempfile.pdf"
         pdf_file.save(pdf_path)
-        
+         
         # Extraire les réponses
         responses = extract_text_and_annotations(pdf_path)
         logger.info("responses: %s", responses)
