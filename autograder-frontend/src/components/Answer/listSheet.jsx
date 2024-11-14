@@ -242,6 +242,7 @@ const ListCopy = () => {
                     value={academicYear}
                     onChange={(e) => setAcademicYear(e.target.value)}
                     className={commonInputClasses}
+                    aria-label="Année Universitaire"
                   />
                 </div>
               </div>
