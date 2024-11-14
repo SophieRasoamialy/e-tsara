@@ -233,7 +233,7 @@ const ListCopy = () => {
                     className="block text-gray-700 text-sm font-bold mb-2"
                     htmlFor="academicYear"
                   >
-                    Année Universitaire
+                    Année Universitairee
                   </label>
                   <input
                     id="academicYear"
