@@ -184,11 +184,11 @@ def analyze_qcm():
          
         # Extraire les réponses
         responses = extract_text_and_annotations(pdf_path)
-        logger.info("responses: %s", responses)
+        logger.info("responses:: %s", responses)
         
         # Comparer avec les réponses correctes
         results = compare_responses(responses, correct_answers)
-        logger.info("results: %s", results)
+        logger.info("results:: %s", results)
         
         return jsonify({'results': results})
         
