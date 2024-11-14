@@ -188,6 +188,7 @@ def analyze_qcm():
         
         # Comparer avec les réponses correctes
         results = compare_responses(responses, correct_answers)
+        logger.info("results: %s", results)
         
         return jsonify({'results': results})
         
