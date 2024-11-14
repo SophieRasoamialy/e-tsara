@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 import json
 import fitz  # PyMuPDF
+import cv2
+import numpy as np
 from sentence_transformers import SentenceTransformer, util
 from bs4 import BeautifulSoup
 import re
@@ -8,6 +10,9 @@ import unicodedata
 import string
 import math
 import logging
+from PIL import Image
+import pytesseract
+import io
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,6 +21,172 @@ app = Flask(__name__)
 
 # Charger le modèle de sentence-transformers
 model = SentenceTransformer('all-MiniLM-L6-v2')
+
+def preprocess_scanned_page(page):
+    """
+    Prétraite une page scannée pour améliorer la détection du texte et des annotations.
+    """
+    # Convertir la page en image
+    pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # Augmenter la résolution
+    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    
+    # Convertir en format numpy pour OpenCV
+    img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    
+    # Convertir en niveaux de gris
+    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+    
+    # Amélioration du contraste
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+    enhanced = clahe.apply(gray)
+    
+    # Débruitage
+    denoised = cv2.fastNlMeansDenoising(enhanced)
+    
+    # Binarisation adaptative
+    binary = cv2.adaptiveThreshold(
+        denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+        cv2.THRESH_BINARY, 11, 2
+    )
+    
+    return binary
+
+def detect_underlines(binary_image):
+    """
+    Détecte les lignes soulignées dans l'image binaire.
+    """
+    # Détection des lignes horizontales
+    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25,1))
+    detect_horizontal = cv2.morphologyEx(binary_image, cv2.MORPH_OPEN, horizontal_kernel)
+    
+    # Trouver les contours des lignes
+    contours, _ = cv2.findContours(
+        detect_horizontal, 
+        cv2.RETR_EXTERNAL, 
+        cv2.CHAIN_APPROX_SIMPLE
+    )
+    
+    underlines = []
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        if w > 30 and h < 5:  # Filtrer les lignes pertinentes
+            underlines.append((x, y, x+w, y+h))
+            
+    return underlines
+
+def extract_text_above_underline(binary_image, underline, max_height=30):
+    """
+    Extrait le texte au-dessus d'une ligne soulignée.
+    """
+    x, y, x2, y2 = underline
+    # Région d'intérêt au-dessus de la ligne
+    roi = binary_image[max(0, y-max_height):y, x:x2]
+    
+    # Utiliser Tesseract pour extraire le texte
+    text = pytesseract.image_to_string(
+        Image.fromarray(roi), 
+        config='--psm 6'  # Suppose que le texte est uniforme
+    )
+    
+    return clean_text(text)
+
+def extract_annotations(doc):
+    page_annotations = {}
+    
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        annotations = []
+        
+        # Prétraitement de la page scannée
+        binary_image = preprocess_scanned_page(page)
+        
+        # Détection des soulignements
+        underlines = detect_underlines(binary_image)
+        
+        # Extraire le texte pour chaque soulignement
+        for underline in underlines:
+            text = extract_text_above_underline(binary_image, underline)
+            if text:
+                annotation_info = {
+                    "type": "manual_line",
+                    "rect": fitz.Rect(underline),
+                    "text_above": text,
+                    "page_num": page_num
+                }
+                annotations.append(annotation_info)
+        
+        # Détection des cases cochées
+        checkboxes = detect_checkboxes(binary_image)
+        for checkbox in checkboxes:
+            if is_checkbox_checked(binary_image, checkbox):
+                # Extraire le texte à côté de la case cochée
+                checkbox_text = extract_checkbox_text(binary_image, checkbox)
+                annotation_info = {
+                    "type": "manual_check",
+                    "rect": fitz.Rect(checkbox),
+                    "text": checkbox_text,
+                    "page_num": page_num
+                }
+                annotations.append(annotation_info)
+        
+        page_annotations[page_num] = annotations
+    
+    return page_annotations
+
+def detect_checkboxes(binary_image):
+    """
+    Détecte les cases à cocher dans l'image.
+    """
+    # Création d'un masque pour détecter les formes carrées/rectangulaires
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20,20))
+    morphed = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel)
+    
+    # Trouver les contours
+    contours, _ = cv2.findContours(
+        morphed, 
+        cv2.RETR_EXTERNAL, 
+        cv2.CHAIN_APPROX_SIMPLE
+    )
+    
+    checkboxes = []
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        aspect_ratio = float(w)/h
+        # Filtrer les rectangles qui ressemblent à des cases à cocher
+        if 0.8 <= aspect_ratio <= 1.2 and 15 <= w <= 30:
+            checkboxes.append((x, y, x+w, y+h))
+            
+    return checkboxes
+
+def is_checkbox_checked(binary_image, checkbox):
+    """
+    Détermine si une case à cocher est cochée.
+    """
+    x, y, x2, y2 = checkbox
+    roi = binary_image[y:y2, x:x2]
+    
+    # Calculer le pourcentage de pixels noirs
+    black_pixels = np.sum(roi == 0)
+    total_pixels = roi.size
+    
+    # Si plus de 20% des pixels sont noirs, considérer comme coché
+    return (black_pixels / total_pixels) > 0.2
+
+def extract_checkbox_text(binary_image, checkbox, max_width=200):
+    """
+    Extrait le texte à côté d'une case à cocher.
+    """
+    x, y, x2, y2 = checkbox
+    # Région d'intérêt à droite de la case
+    roi = binary_image[y:y2, x2:min(x2+max_width, binary_image.shape[1])]
+    
+    # Utiliser Tesseract pour extraire le texte
+    text = pytesseract.image_to_string(
+        Image.fromarray(roi),
+        config='--psm 6'
+    )
+    
+    return clean_text(text)
 
 def normalize_text(text,remove_spaces=True):
     # Convertir en minuscules
@@ -229,170 +400,6 @@ def euclidean_distance(point1, point2):
     return math.sqrt((point1[0] - point2[0]) * 2 + (point1[1] - point2[1]) * 2)
 
 
-def extract_annotations(doc):
-    page_annotations = {}
-    # Liste des symboles cochés à rechercher
-    symbols_to_check = ["x","X", "✓"]
-
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        annotations = []
-
-        # Détecter les dessins manuels (rectangles, lignes et cercles)
-        drawings = page.get_drawings()
-        for drawing in drawings:
-            for item in drawing['items']:
-                try:
-                    # Détection des rectangles (encadrements manuels)
-                    if item[0] == 're':  # Détection des rectangles manuels
-                        if isinstance(item[1], (tuple, list)) and len(item[1]) == 4:
-                            rect_info = {
-                                "type": "manual_box",  # Encadrement manuel détecté
-                                "rect": fitz.Rect(item[1]),  # Convertir item[1] en objet Rect valide
-                                "page_num": page_num,
-                            }
-
-                            # Extraire le texte à l'intérieur du rectangle
-                            text_inside = page.get_text("text", clip=rect_info["rect"])
-                            if clean_text(text_inside):
-                                rect_info["content"] = clean_text(text_inside)
-
-                            # Ajouter à la liste des annotations
-                            annotations.append(rect_info)
-
-                    # Détection des ellipses (encadrements circulaires manuels)
-                    elif item[0] == 'el':  # Détection des ellipses ou cercles
-                        ellipse_rect = fitz.Rect(item[1])  # Extraire la boîte englobante de l'ellipse
-                        ellipse_info = {
-                            "type": "manual_ellipse",  # Encadrement circulaire détecté
-                            "rect": ellipse_rect,
-                            "page_num": page_num,
-                        }
-
-                        # Extraire le texte à l'intérieur de l'ellipse
-                        text_inside = page.get_text("text", clip=ellipse_info["rect"])
-                        if clean_text(text_inside):
-                            ellipse_info["content"] = clean_text(text_inside)
-
-                        # Ajouter à la liste des annotations
-                        annotations.append(ellipse_info)
-
-                    elif item[0] == 'l':  # Détection des lignes (soulignements manuels)
-                        from_point = item[1]
-                        to_point = item[2]
-
-                        if isinstance(from_point, fitz.Point) and isinstance(to_point, fitz.Point):
-                            padding = 5  # Augmenter le padding pour capturer plus de texte
-                            # Créer un rectangle autour de la ligne
-                            rect_from = fitz.Rect(min(from_point.x, to_point.x) - padding,
-                                                  min(from_point.y, to_point.y) - padding,
-                                                  max(from_point.x, to_point.x) + padding,
-                                                  max(from_point.y, to_point.y) + padding)
-
-                            # Extraire le texte au-dessus de la ligne
-                            text_above_line = page.get_text("text", clip=rect_from)
-
-                            if clean_text(text_above_line):
-                                line_info = {
-                                    "type": "manual_line",  # Ligne manuelle
-                                    "from": from_point,
-                                    "to": to_point,
-                                    "page_num": page_num,
-                                    "rect": rect_from,  # Ajouter un champ rect
-                                    "text_above": clean_text(text_above_line),
-                                    "subtype": "manual_underline"  # Soulignement manuel
-                                }
-                                annotations.append(line_info)
-                            else:
-                                logger.info(f"Pas de texte détecté autour de la ligne à la page {page_num}.")
-                        else:
-                            logger.info(f"Points invalides détectés : from_point={from_point}, to_point={to_point}")
-
-                except Exception as e:
-                    logger.info(f"Erreur rencontrée lors du traitement de l'élément : {item}, Erreur : {e}")
-
-        # Détection du texte manuscrit
-        text_blocks = page.get_text("dict")["blocks"]  # Capturer tout le texte sous forme de dictionnaire
-
-        # Liste des caractères ou symboles représentant de nouvelles options de réponse (par ex. "❍", "•", etc.)
-        stop_symbols = ["❍", "◯", "❑", "⬜"]
-
-        for block in text_blocks:
-            if block["type"] == 0:  # Type 0 = texte imprimé normal
-                for line in block["lines"]:
-                    for span in line["spans"]:
-                        text = clean_text(span["text"])
-                        
-                        # Rechercher les symboles cochés "X" ou "✓"
-                        if any(symbol in text for symbol in symbols_to_check):
-                            # Extraire le symbole détecté
-                            detected_symbol = [symbol for symbol in symbols_to_check if symbol in text][0]
-                            
-                            # Si le symbole détecté est 'x'
-                            if text == 'x':
-                                # Initialiser symbol_info avec les informations disponibles
-                                symbol_info = {
-                                    "type": "manual_check",
-                                    "symbol": detected_symbol,
-                                    "text_symbol": text,  # Le texte contenant le symbole
-                                    "rect": fitz.Rect(span["bbox"]),  # Coordonnées de la zone du texte
-                                    "page_num": page.number
-                                }
-
-                                # Initialiser le texte complet capturé à droite du symbole
-                                full_text = ""
-                                capture_increment = 30  # Largeur de capture pour chaque segment
-                                current_x = symbol_info["rect"][2]  # Coordonnée x1 (droite du symbole "x")
-                                y0, y1 = symbol_info["rect"][1] + 5, symbol_info["rect"][3] - 5  # Limiter la hauteur de capture
-                                max_capture_width = 500  # Largeur maximale à parcourir à droite
-
-                                # Boucle pour capturer le texte à droite du symbole
-                                while current_x < symbol_info["rect"][2] + max_capture_width:
-                                    # Définir une nouvelle zone de capture pour chaque segment
-                                    text_to_right_rect = fitz.Rect(
-                                        current_x,  # Coordonnée x1 (droite de la zone précédente)
-                                        y0,  # y0 (limite supérieure)
-                                        current_x + capture_increment,  # Étendre légèrement à droite
-                                        y1  # y1 (limite inférieure)
-                                    )
-                                    
-                                    # Extraire le texte dans cette petite zone
-                                    text_to_right = clean_text(page.get_text("text", clip=text_to_right_rect))
-                                    
-                                    # Arrêter la capture si un symbole d'option est détecté
-                                    if any(stop_symbol in text_to_right for stop_symbol in stop_symbols):
-                                        break  # Arrêter la capture si une nouvelle option est détectée
-
-                                    # Ajouter le texte capturé au texte complet
-                                    full_text += text_to_right
-                                    
-                                    # Passer à la prochaine section de capture
-                                    current_x += capture_increment
-
-                                # Correction des mots coupés à la fin
-                                if full_text.endswith(" "):
-                                    # Si le texte se termine par un espace, il est possible que le mot soit coupé
-                                    extended_capture_rect = fitz.Rect(
-                                        current_x,  # Continuer la capture à droite
-                                        y0,  # y0 (limite supérieure)
-                                        current_x + capture_increment,  # Capturer une petite section supplémentaire
-                                        y1  # y1 (limite inférieure)
-                                    )
-                                    additional_text = clean_text(page.get_text("text", clip=extended_capture_rect))
-                                    full_text += additional_text  # Ajouter le texte supplémentaire si nécessaire
-                                
-                                # Nettoyer les répétitions de caractères (comme "dd" ou "oo")
-                                def remove_repetitions(text):
-                                    return re.sub(r'(.)\1+', r'\1', text)
-                                
-                                # Nettoyer le texte final capturé
-                                symbol_info["text"] = remove_repetitions(clean_text(full_text))
-                                # Ajouter l'annotation avec le texte complet
-                                annotations.append(symbol_info)
-
-        page_annotations[page_num] = annotations
-
-    return page_annotations
 
 def separate_question_options(item):
     # Vérifiez que l'item est un dictionnaire contenant une clé 'question'
