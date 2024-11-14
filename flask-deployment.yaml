@@ -27,5 +27,5 @@ spec:
               memory: "512Mi"  # Demander 512 Mo de mémoire au début
               cpu: "250m"      # Demander 0.25 CPU (ajuster selon les besoins)
             limits:
-              memory: "2Gi"    # Limiter l'utilisation à 1 Go de mémoire
+              memory: "1Gi"    # Limiter l'utilisation à 1 Go de mémoire
               cpu: "500m"      # Limiter l'utilisation à 0.5 CPU (ajuster selon les besoins)

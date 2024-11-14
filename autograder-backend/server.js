@@ -85,7 +85,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/activities', activityRoutes);
 
-app.get('/cook', (req, res) => {
+app.get('/cookie', (req, res) => {
   console.log('Cookies:', req.cookies);
 });
 
