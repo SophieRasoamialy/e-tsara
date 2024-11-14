@@ -18,6 +18,8 @@ COPY . /app
 # Utilisation d'un fichier requirements.txt pour installer toutes les dépendances
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 && apt-get install tesseract-ocr
+
 # Étape 6 : Exposer le port de l'application Flask
 EXPOSE 5000
 
