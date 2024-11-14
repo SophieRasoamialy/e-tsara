@@ -12,6 +12,8 @@ RUN apt-get update && \
     tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
+RUN pip install gevent
+
 # Étape 3 : Créer un répertoire pour l'application
 WORKDIR /app
 
