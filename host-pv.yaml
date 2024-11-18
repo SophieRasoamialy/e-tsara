@@ -1,8 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: host-pv  # Nom du PersistentVolume
-  namespace: autograder
+  name: host-pv-1  # Nom du PersistentVolume
 spec:
   capacity:
     storage: 1Gi  # Capacité du volume
