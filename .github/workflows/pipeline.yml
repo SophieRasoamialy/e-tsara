@@ -64,8 +64,11 @@ jobs:
             docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:latest
             docker push hasindrae/evalpdfservice:latest
           fi
-      
 
+      - name: build mongo
+        run:
+          docker-compose build --no-cache mongo
+      
       - name: Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
