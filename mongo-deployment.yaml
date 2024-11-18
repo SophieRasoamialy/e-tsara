@@ -2,10 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongodb-deployment
+  namespace: autograder
   labels:
     app: mongo-db
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: mongodb-pod
