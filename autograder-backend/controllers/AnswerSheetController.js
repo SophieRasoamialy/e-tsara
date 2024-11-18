@@ -541,7 +541,6 @@ const correctAnswerSheet = async (req, res) => {
     formData.append('pdf', fs.createReadStream(tempPdfPath)); // Ajouter le PDF au formulaire
     formData.append('correct_answers', JSON.stringify(questionsWithAnswers)); // Ajouter d'autres données si nécessaire
 
-
     const response = await axios.post("http://flask-service:5000/analyze_qcm", formData, {
       headers: {
         ...formData.getHeaders(),
