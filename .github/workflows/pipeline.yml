@@ -64,8 +64,11 @@ jobs:
             docker tag hasindrae/evalpdfservice:latest hasindrae/evalpdfservice:latest
             docker push hasindrae/evalpdfservice:latest
           fi
-      
 
+      - name: build mongo
+        run:
+          docker-compose build --no-cache mongo
+      
       - name: Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -74,53 +77,54 @@ jobs:
 
       - name: Update kubeconfig
         run: |
-            aws eks update-kubeconfig --name autograder --region us-east-1
+            aws eks update-kubeconfig --name projet-master-eks --region us-east-1 
         
 
       - name: Check and Create Storage Resources
         run: |
-          if ! kubectl get pv host-pv &>/dev/null; then kubectl apply -f host-pv.yaml; fi
-          if ! kubectl get pvc host-pvc &>/dev/null; then kubectl apply -f host-pvc.yaml && kubectl wait --for=condition=Bound pvc/mongo-pvc --timeout=60s; fi
-      
+          if ! kubectl get pv host-pv -n autograder &>/dev/null; then kubectl apply -f host-pv.yaml -n autograder; fi
+          if ! kubectl get pvc host-pvc -n autograder &>/dev/null; then kubectl apply -f host-pvc.yaml -n autograder && kubectl wait --for=condition=Bound pvc/mongo-pvc -n autograder --timeout=60s; fi
+          
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f mongo-deployment.yaml
-          kubectl apply -f nginx-configmap.yaml
-          kubectl apply -f backend-deployment.yaml
-          kubectl apply -f frontend-deployment.yaml
-          kubectl apply -f flask-deployment.yaml
-          kubectl apply -f frontend-service.yaml
-          kubectl apply -f backend-service.yaml
-          kubectl apply -f mongo-service.yaml
-          kubectl apply -f flask-service.yaml
+          kubectl apply -f mongo-deployment.yaml -n autograder
+          kubectl apply -f nginx-configmap.yaml -n autograder
+          kubectl apply -f backend-deployment.yaml -n autograder
+          kubectl apply -f frontend-deployment.yaml -n autograder
+          kubectl apply -f flask-deployment.yaml -n autograder
+          kubectl apply -f frontend-service.yaml -n autograder
+          kubectl apply -f backend-service.yaml -n autograder
+          kubectl apply -f mongo-service.yaml -n autograder
+          kubectl apply -f flask-service.yaml -n autograder
 
       - name: Update Deployments with new images
         run: |
           IMAGE_VERSION=${{ github.sha }}
-
+      
           # Vérifier si le frontend a été modifié
           if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-frontend/';then
             echo "Updating frontend deployment with new image version"
-            kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${IMAGE_VERSION} && kubectl rollout restart deployment/frontend-deployment
+            kubectl set image deployment/frontend-deployment frontend=hasindrae/autograder-frontend:${IMAGE_VERSION} -n autograder && kubectl rollout restart deployment/frontend-deployment -n autograder
           else
             echo "No changes in frontend, skipping update for frontend deployment"
           fi
-
+      
           # Vérifier si le backend a été modifié
           if git diff --name-only HEAD~1 HEAD | grep -q '^autograder-backend/';then
             echo "Updating backend deployment with new image version"
-            kubectl set image deployment/backend-deployment backend=hasindrae/autograder-backend:${IMAGE_VERSION} && kubectl rollout restart deployment/backend-deployment
+            kubectl set image deployment/backend-deployment backend=hasindrae/autograder-backend:${IMAGE_VERSION} -n autograder && kubectl rollout restart deployment/backend-deployment -n autograder
           else
             echo "No changes in backend, skipping update for backend deployment"
           fi
-
+      
           # Vérifier si le service Flask a été modifié
           if git diff --name-only HEAD~1 HEAD | grep -q '^evalPDFService/';then
             echo "Updating Flask deployment with new image version"
-            kubectl set image deployment/flask-deployment flask=hasindrae/evalpdfservice:${IMAGE_VERSION} && kubectl rollout restart deployment/flask-deployment
+            kubectl set image deployment/flask-deployment flask=hasindrae/evalpdfservice:${IMAGE_VERSION} -n autograder && kubectl rollout restart deployment/flask-deployment -n autograder
           else
             echo "No changes in Flask, skipping update for Flask deployment"
           fi
+        
 
       - name: Get logs for debugging
         if: failure()

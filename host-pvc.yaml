@@ -2,10 +2,11 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: host-pvc  # Nom du PersistentVolumeClaim
+  namespace: autograder  # Namespace où le PVC est défini
 spec:
   accessModes:
-    - ReadWriteOnce  # Mode d'accès
+    - ReadWriteOnce  # Mode d'accès (doit correspondre au PV)
   resources:
     requests:
-      storage: 1Gi  # Capacité demandée
-  storageClassName: standard  # Classe de stockage
+      storage: 1Gi  # Capacité demandée (doit correspondre au PV)
+  storageClassName: standard  # Classe de stockage (doit correspondre au PV)

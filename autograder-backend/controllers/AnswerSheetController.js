@@ -331,7 +331,7 @@ const uploadAndSaveAnswerSheets = async (req, res) => {
           Bytes: file.buffer,
         },
       };
-      //console.log("textractParams", textractParams);
+      console.log("textractParams", textractParams);
       const textractResponse = await textract
         .detectDocumentText(textractParams)
         .promise();
@@ -339,7 +339,7 @@ const uploadAndSaveAnswerSheets = async (req, res) => {
       const extractedText = textractResponse.Blocks.map(
         (block) => block.Text
       ).join(" ");
-      //console.log("extractedText: ", extractedText);
+      console.log("extractedText: ", extractedText);
 
       // Supposons que le matricule de l'étudiant soit un nombre à 4 chiffres
       const matriculeRegex = /\b\d{4}\b/;
@@ -479,8 +479,18 @@ const saveEditedPdf = async (req, res) => {
   }
 };
 
+
 const correctAnswerSheet = async (req, res) => {
   const { answerSheetId } = req.body;
+
+  console.log("answersheetId:",answerSheetId);
+
+  // Vérification si l'ID est bien présent dans la requête
+  if (!answerSheetId) {
+    return res.status(400).json({
+      message: "L'ID de la feuille de réponse est requis.",
+    });
+  }
 
   try {
     // Obtenir les détails de la feuille de réponse et les questions associées
@@ -489,9 +499,12 @@ const correctAnswerSheet = async (req, res) => {
       .populate("subject_id")
       .populate("student_matricule");
 
-    if (!answerSheet) {
-      throw new Error("Feuille de réponse introuvable");
-    }
+      // Vérifier si la feuille de réponse existe dans la base de données
+      if (!answerSheet) {
+        return res.status(404).json({
+          message: "Feuille de réponse introuvable",
+        });
+      }
 
     const correctQuestions = await Question.find({
       exam_id: answerSheet.exam_id._id,
@@ -529,7 +542,6 @@ const correctAnswerSheet = async (req, res) => {
     const formData = new FormData();
     formData.append('pdf', fs.createReadStream(tempPdfPath)); // Ajouter le PDF au formulaire
     formData.append('correct_answers', JSON.stringify(questionsWithAnswers)); // Ajouter d'autres données si nécessaire
-
 
     const response = await axios.post("http://flask-service:5000/analyze_qcm", formData, {
       headers: {
