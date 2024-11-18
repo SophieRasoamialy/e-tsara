@@ -29,5 +29,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Étape 7 : Démarrer l'application Flask avec Gunicorn
-CMD ["gunicorn", "-w", "2", "-k", "gevent", "-b", "0.0.0.0:5000", "--timeout", "120", "app:app"]
+CMD ["gunicorn", "-w", "1", "-k", "gevent", "-b", "0.0.0.0:5000", "--timeout", "120", "app:app"]
 
