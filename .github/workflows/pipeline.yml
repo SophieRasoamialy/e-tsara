@@ -74,7 +74,7 @@ jobs:
 
       - name: Update kubeconfig
         run: |
-            aws eks update-kubeconfig --name autograder --region eu-west-3
+            aws eks update-kubeconfig --name autograder --region us-east-1 
         
 
       - name: Check and Create Storage Resources
