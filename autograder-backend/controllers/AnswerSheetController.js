@@ -483,6 +483,13 @@ const saveEditedPdf = async (req, res) => {
 const correctAnswerSheet = async (req, res) => {
   const { answerSheetId } = req.body;
 
+  // Vérification si l'ID est bien présent dans la requête
+  if (!answerSheetId) {
+    return res.status(400).json({
+      message: "L'ID de la feuille de réponse est requis.",
+    });
+  }
+
   try {
     // Obtenir les détails de la feuille de réponse et les questions associées
     const answerSheet = await AnswerSheet.findById(answerSheetId)
@@ -490,9 +497,12 @@ const correctAnswerSheet = async (req, res) => {
       .populate("subject_id")
       .populate("student_matricule");
 
-    if (!answerSheet) {
-      throw new Error("Feuille de réponse introuvable");
-    }
+      // Vérifier si la feuille de réponse existe dans la base de données
+      if (!answerSheet) {
+        return res.status(404).json({
+          message: "Feuille de réponse introuvable",
+        });
+      }
 
     const correctQuestions = await Question.find({
       exam_id: answerSheet.exam_id._id,
