@@ -41,7 +41,7 @@ app.use(session({
 
 // Configuration CORS
 app.use(cors({
-  origin: ['http://a3cdc4b84b0394509aafd77780030b7e-427148052.us-east-1.elb.amazonaws.com', 'http://localhost:3000'], 
+  origin: ['http://ae1e407f3fd6d414dab0328885d036fc-438063696.us-east-1.elb.amazonaws.com', 'http://localhost:3000'], 
   credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
@@ -51,7 +51,7 @@ app.options('*', cors());
 
 
 app.use(cookieParser());
-
+ 
 app.use((req, res, next) => {
   next();
 });
@@ -85,7 +85,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/activities', activityRoutes);
 
-app.get('/cook', (req, res) => {
+app.get('/cookie', (req, res) => {
   console.log('Cookies:', req.cookies);
 });
 
