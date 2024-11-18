@@ -172,7 +172,7 @@ def compare_responses(annotated_responses, correct_answers, similarity_threshold
                 'page': response['page']
             })
     
-    return results
+    return results 
   
 @app.route('/analyze_qcm', methods=['POST'])
 def analyze_qcm():
