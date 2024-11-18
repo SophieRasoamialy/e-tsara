@@ -483,6 +483,8 @@ const saveEditedPdf = async (req, res) => {
 const correctAnswerSheet = async (req, res) => {
   const { answerSheetId } = req.body;
 
+  console.log("answersheetId:",answerSheetId);
+
   // Vérification si l'ID est bien présent dans la requête
   if (!answerSheetId) {
     return res.status(400).json({

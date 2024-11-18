@@ -10,3 +10,4 @@ spec:
     requests:
       storage: 1Gi  # Capacité demandée (doit correspondre au PV)
   storageClassName: standard  # Classe de stockage (doit correspondre au PV)
+
