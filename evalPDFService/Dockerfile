@@ -9,7 +9,6 @@ RUN apt-get update && \
     poppler-utils \
     libgl1 \
     libglib2.0-0 \
-    tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install gevent
