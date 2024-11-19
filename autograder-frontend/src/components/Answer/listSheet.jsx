@@ -122,17 +122,16 @@ const ListCopy = () => {
     try {
       for (let i = 0; i < pdfUrls.length; i++) {
         const pdf = pdfUrls[i];
-        await fetch(
+        await axios.post(
           `${apiUrl}/api/feuilles-reponses/exam/sheet-answer/correct`,
+          { answerSheetId: pdf.answerSheetId },  
           {
-            method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ answerSheetId: pdf.answerSheetId }),
           }
-        );
+        );        
         setProgress(((i + 1) / pdfUrls.length) * 100);
       }
       await MySwal.fire({
@@ -233,7 +232,7 @@ const ListCopy = () => {
                     className="block text-gray-700 text-sm font-bold mb-2"
                     htmlFor="academicYear"
                   >
-                    Année Universitaire
+                    Année Universitairee
                   </label>
                   <input
                     id="academicYear"
@@ -242,6 +241,7 @@ const ListCopy = () => {
                     value={academicYear}
                     onChange={(e) => setAcademicYear(e.target.value)}
                     className={commonInputClasses}
+                    aria-label="Année Universitaire"
                   />
                 </div>
               </div>

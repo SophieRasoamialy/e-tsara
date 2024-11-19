@@ -362,7 +362,7 @@ const CreateExam = () => {
                   Question
                 </label>
                 <Editor
-                  apiKey="fls9ty7epmkg09gf3uz2dix902lomrqqi6kltun0ksqfc1b3"
+                  apiKey="ktcqgw92yzxss33pa2nlcemfhkng7m2p71qutrwgb79zgsa6"
                   init={{
                     plugins:
                       "anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed linkchecker a11ychecker tinymcespellchecker permanentpen powerpaste advtable advcode editimage advtemplate ai mentions tinycomments tableofcontents footnotes mergetags autocorrect typography inlinecss markdown",
@@ -402,7 +402,7 @@ const CreateExam = () => {
                   Réponse
                 </label>
                 <Editor
-                  apiKey="fls9ty7epmkg09gf3uz2dix902lomrqqi6kltun0ksqfc1b3"
+                  apiKey="ktcqgw92yzxss33pa2nlcemfhkng7m2p71qutrwgb79zgsa6"
                   init={{
                     plugins:
                       "anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed linkchecker a11ychecker tinymcespellchecker permanentpen powerpaste advtable advcode editimage advtemplate ai mentions tinycomments tableofcontents footnotes mergetags autocorrect typography inlinecss markdown",
