@@ -176,11 +176,41 @@ def compare_responses(annotated_responses, correct_answers, similarity_threshold
   
 @app.route('/analyze_qcm', methods=['POST'])
 def analyze_qcm():
+    logger.info("debut............................................................")
     try:
         pdf_file = request.files['pdf']
         correct_answers = json.loads(request.form.get('correct_answers'))
         pdf_path = "/tmp/tempfile.pdf"
         pdf_file.save(pdf_path)
+        logger.info("second................................................................")
+        if not pdf_path or not correct_answers:
+            logger.warning("Missing pdf_path or correct_answers")
+            return jsonify({'error': 'Missing pdf_path or correct_answers'}), 400
+
+        # Nettoyer les réponses correctes
+        cleaned_correct_answers = [
+            {'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']}
+            for ans in correct_answers
+        ]
+        logger.info("Correct answers: %s", cleaned_correct_answers)
+        logger.info("")
+
+        # Extraire le texte et les annotations du PDF
+        student_info, grouped_questions = extract_text_and_annotations(pdf_path)
+        doc = fitz.open(pdf_path)
+        page_annotations = extract_annotations(doc)
+        logger.info("Page annotations: %s", page_annotations)
+        logger.info("")
+
+        associated_responses = associate_responses_with_questions(grouped_questions, page_annotations)
+        logger.info("Associated responses: %s", associated_responses)
+        logger.info("")
+
+        comparison_results = compare_responses(associated_responses, cleaned_correct_answers)
+        logger.info("Comparison results: %s", comparison_results)
+        logger.info("")
+
+        return jsonify({'results': comparison_results})
          
         # Extraire les réponses
         responses = extract_text_and_annotations(pdf_path)
