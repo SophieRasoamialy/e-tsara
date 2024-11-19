@@ -482,12 +482,13 @@ def compare_responses(annotated, correct_answers):
  
 @app.route('/analyze_qcm', methods=['POST'])
 def analyze_qcm():
+    logger.info("debut............................................................")
     try:
         pdf_file = request.files['pdf']
         correct_answers = json.loads(request.form.get('correct_answers'))
         pdf_path = "/tmp/tempfile.pdf"
         pdf_file.save(pdf_path)
-
+        logger.info("second................................................................")
         if not pdf_path or not correct_answers:
             logger.warning("Missing pdf_path or correct_answers")
             return jsonify({'error': 'Missing pdf_path or correct_answers'}), 400

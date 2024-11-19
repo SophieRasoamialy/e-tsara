@@ -6,7 +6,7 @@ metadata:
   labels:
     app: autograder
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: autograder
@@ -25,8 +25,8 @@ spec:
         - containerPort: 5000
         resources:
             requests:
-              memory: "512Mi"  # Demander 512 Mo de mémoire au début
+              memory: "1Gi"  # Demander 512 Mo de mémoire au début
               cpu: "250m"      # Demander 0.25 CPU (ajuster selon les besoins)
             limits:
-              memory: "1Gi"    # Limiter l'utilisation à 1 Go de mémoire
+              memory: "2Gi"    # Limiter l'utilisation à 1 Go de mémoire
               cpu: "500m"      # Limiter l'utilisation à 0.5 CPU (ajuster selon les besoins)

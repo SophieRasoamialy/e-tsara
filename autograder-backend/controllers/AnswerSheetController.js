@@ -483,7 +483,7 @@ const saveEditedPdf = async (req, res) => {
 const correctAnswerSheet = async (req, res) => {
   const { answerSheetId } = req.body;
 
-  console.log("answersheetId:",answerSheetId);
+  console.log("answersheetId>>>>>>>>>>>>><",answerSheetId);
 
   // Vérification si l'ID est bien présent dans la requête
   if (!answerSheetId) {
@@ -499,6 +499,8 @@ const correctAnswerSheet = async (req, res) => {
       .populate("subject_id")
       .populate("student_matricule");
 
+      console.log("")
+      console.log("answerSheet>>>>>>>>>>>>>>" + answerSheet)
       // Vérifier si la feuille de réponse existe dans la base de données
       if (!answerSheet) {
         return res.status(404).json({
@@ -510,6 +512,7 @@ const correctAnswerSheet = async (req, res) => {
       exam_id: answerSheet.exam_id._id,
     });
 
+    console.log("correctQuestion>>>>>>>>>",correctQuestions)
     const correctAnswersData = await AnswerQuestion.find({
       question_id: { $in: correctQuestions.map((q) => q._id) },
     });
@@ -526,6 +529,8 @@ const correctAnswerSheet = async (req, res) => {
       };
     });
 
+    console.log("questions with answer ..........")
+
     const s3Object = await s3
       .getObject({
         Bucket: process.env.S3_BUCKET_NAME,
@@ -537,7 +542,7 @@ const correctAnswerSheet = async (req, res) => {
 
     const tempPdfPath = `/tmp/${answerSheetId}.pdf`;
     fs.writeFileSync(tempPdfPath, pdfBytes);
-
+console.log("Writing................")
     // Créez un objet FormData pour envoyer le fichier
     const formData = new FormData();
     formData.append('pdf', fs.createReadStream(tempPdfPath)); // Ajouter le PDF au formulaire
