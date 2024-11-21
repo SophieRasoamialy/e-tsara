@@ -518,7 +518,7 @@ def analyze_qcm():
 
         # Nettoyer les réponses correctes
         cleaned_correct_answers = [{'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']} for ans in correct_answers]
-        logger.info("cleaned_correct_answers:>>>>>>>>>>>>" %s, cleaned_correct_answers)
+        logger.info("cleaned_correct_answers:>>>>>>>>>>>> %s", cleaned_correct_answers)
 
         # Extraire le texte et les annotations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
