@@ -30,7 +30,7 @@ const Sidebar = () => {
           alt="Mi Tsara logo"
           className="w-32 h-auto"
         />
-      </div>
+      </div> 
       <nav className="flex-1">
         <ul className="space-y-4">
           <li>
