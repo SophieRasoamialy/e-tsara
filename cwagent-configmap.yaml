@@ -29,7 +29,7 @@ data:
             "collect_list": [
               {
                 "file_path": "/var/log/containers/*.log",
-                "log_group_name": "autograder/logs",
+                "log_group_name": "projet-master-eks/logs",
                 "log_stream_name": "{pod_name}",
                 "timezone": "UTC"
               }
