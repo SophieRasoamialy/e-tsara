@@ -162,29 +162,29 @@ def associate_responses_with_questions(grouped_questions, annotations):
 
     for page_num, annotation_list in annotations.items():
         for annotation in annotation_list:
-            # Vérification que l'annotation est un dictionnaire valide
-            if not annotation or not isinstance(annotation, dict):
-                logger.info(f"Invalid annotation type: {type(annotation)} - {annotation}")
+            # Vérifier que l'annotation est bien un dictionnaire
+            if not isinstance(annotation, dict):
+                logger.info(f"Unexpected type for annotation: {type(annotation)} - {annotation}")
                 continue
 
             annotation_rect = annotation.get('rect')
-            if not annotation_rect or not isinstance(annotation_rect, fitz.Rect):
-                logger.info(f"Invalid or missing 'rect' in annotation: {annotation}")
+            if not isinstance(annotation_rect, fitz.Rect):
+                logger.info(f"Unexpected type for annotation rect: {type(annotation.get('rect'))}")
                 continue
 
             response_text = annotation.get('text_above', '').strip()
             found_question = None
-            question_rect_final = None
-
-            # Gestion des annotations de type 'manual_check'
-            if annotation.get('type') == 'manual_check':
-                annotation_text = annotation.get('text', '').strip()
-                if annotation_text:
+            question_rect_final = None  # Initialisation de question_rect_final
+           
+            # Gestion des annotations de type 'manual_check' (cases cochées)
+            if annotation['type'] == 'manual_check':
+                if len(annotation['text']) > 0:
                     for question in grouped_questions:
-                        if question.get('type') == 'multiple_choice':
-                            question_rect = fitz.Rect(question.get('bbox', [0, 0, 0, 0]))
-                            for option in question.get('options', []):
-                                if normalize_text(annotation_text) in normalize_text(option):
+                        if question['type'] == 'multiple_choice':
+                            question_rect = fitz.Rect(question['bbox'])
+                            # Vérifier si la question est proche de l'annotation
+                            for option in question['options']:
+                                if normalize_text(annotation['text']) in normalize_text(option):
                                     found_question = question
                                     question_rect_final = question_rect
                                     break
@@ -192,13 +192,14 @@ def associate_responses_with_questions(grouped_questions, annotations):
                             break
 
             # Gestion des annotations de type 'manual_line'
-            elif annotation.get('type') == 'manual_line':
+            elif annotation['type'] == 'manual_line':
                 normalized_response_text = normalize_text(response_text)
-                if normalized_response_text:
+                if len(response_text) > 0:
+                    # Chercher une correspondance avec une question à choix multiples
                     for question in grouped_questions:
-                        if question.get('type') == 'multiple_choice':
-                            question_rect = fitz.Rect(question.get('bbox', [0, 0, 0, 0]))
-                            for option in question.get('options', []):
+                        if question['type'] == 'multiple_choice':
+                            question_rect = fitz.Rect(question['bbox'])
+                            for option in question['options']:
                                 if normalized_response_text in normalize_text(option):
                                     found_question = question
                                     question_rect_final = question_rect
@@ -206,17 +207,28 @@ def associate_responses_with_questions(grouped_questions, annotations):
                         if found_question:
                             break
 
-                    # Chercher une question ouverte
+                    # Si aucune correspondance n'est trouvée, chercher une question ouverte
                     if not found_question:
-                        max_y = -float('inf')
-                        annotation_center = get_center((annotation_rect.x0, annotation_rect.y0, annotation_rect.x1, annotation_rect.y1))
+                        # Avant de calculer la distance, vérifier les coordonnées de chaque centre
+                        annotation_rect = fitz.Rect(annotation['rect'])
+                        annotation_center = get_center(annotation_rect)
+
+                        if annotation_center is None:
+                            logger.info(f"Invalid annotation rectangle for annotation on page {page_num}: {annotation}")
+                            continue  # Passer à l'annotation suivante
+
                         max_distance = 100
                         min_distance = float('inf')
 
                         for question in grouped_questions:
-                            if question.get('type') == 'open_ended' and question.get('page_num') == page_num:
-                                question_rect = fitz.Rect(question.get('bbox', [0, 0, 0, 0]))
+                            if question['type'] == 'open_ended' and question['page_num'] == annotation['page_num']:
+                                question_rect = fitz.Rect(question['bbox'])
                                 question_center = get_center(question_rect)
+
+                                if question_center is None:
+                                    logger.info(f"Invalid question rectangle for question on page {question['page_num']}: {question}")
+                                    continue  # Passer à la question suivante
+
                                 distance = euclidean_distance(annotation_center, question_center)
 
                                 if distance < min_distance and distance <= max_distance:
@@ -228,12 +240,12 @@ def associate_responses_with_questions(grouped_questions, annotations):
                                         max_y = question_rect.y1
                                         found_question = question
                                         question_rect_final = question_rect
-
-            # Ajouter la correspondance question-réponse uniquement si elle est valide
+            
+            # Ajouter la correspondance question-réponse uniquement si une question et son rectangle sont trouvés
             if found_question and question_rect_final:
                 question_response_mapping.append({
-                    'question': found_question.get('question', ''),
-                    'response': response_text if annotation.get('type') != 'manual_check' else annotation.get('text', ''),
+                    'question': found_question['question'],
+                    'response': response_text if annotation['type'] != 'manual_check' else annotation['text'],
                     'page_num': page_num,
                     'question_rect': rect_to_dict(question_rect_final)
                 })
@@ -244,18 +256,17 @@ def associate_responses_with_questions(grouped_questions, annotations):
 
 
 def get_center(rect):
-    """
-    Calcule le centre d'un rectangle.
-    """
-    x_center = (rect[0] + rect[2]) / 2
-    y_center = (rect[1] + rect[3]) / 2
-    return (x_center, y_center)
+    if rect is None:
+        return None
+    # Vérifier que les coordonnées sont valides avant de calculer le centre
+    if rect.x0 == rect.x1 or rect.y0 == rect.y1:  # Vérifier que la largeur et la hauteur sont valides
+        return None
+    return ((rect.x0 + rect.x1) / 2, (rect.y0 + rect.y1) / 2)
 
-def euclidean_distance(point1, point2):
-    """
-    Calcule la distance euclidienne entre deux points.
-    """
-    return math.sqrt((point1[0] - point2[0]) * 2 + (point1[1] - point2[1]) * 2)
+def euclidean_distance(center1, center2):
+    if center1 is None or center2 is None:
+        return float('inf')  # Retourner une grande valeur si l'une des coordonnées est invalide
+    return ((center1[0] - center2[0]) ** 2 + (center1[1] - center2[1]) ** 2) ** 0.5
 
 
 def extract_annotations(doc):
@@ -507,28 +518,28 @@ def analyze_qcm():
 
         # Nettoyer les réponses correctes
         cleaned_correct_answers = [{'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']} for ans in correct_answers]
-        logger.info("cleaned_correct_answers:>>>>>>>>>>>>", cleaned_correct_answers)
+        logger.info("cleaned_correct_answers:>>>>>>>>>>>>" %s, cleaned_correct_answers)
 
         # Extraire le texte et les annotations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
-        logger.info("grouped questions>>>>>>", grouped_questions)
+        logger.info("grouped questions>>>>>> %s", grouped_questions)
         logger.info("")
         # Ouvrir le document PDF
         doc = fitz.open(pdf_path)
 
         # Extraire les annotations spécifiques des réponses des étudiants
         page_annotations = extract_annotations(doc)
-        logger.info("page annotations >>>>>>>", page_annotations)
+        logger.info("page annotations >>>>>>> %s", page_annotations)
         logger.info("")
 
         # Associer les annotations des réponses aux questions
         associated_responses = associate_responses_with_questions(grouped_questions, page_annotations)
-        logger.info("associated_responses>>>>>>>>>", associated_responses)
+        logger.info("associated_responses>>>>>>>>> %s", associated_responses)
         logger.info("")
 
         # Comparer les réponses annotées avec les réponses correctes
         comparison_results = compare_responses(associated_responses, cleaned_correct_answers)
-        logger.info("comparison_results:",comparison_results)
+        logger.info("comparison_results: %s",comparison_results)
 
         return jsonify({'results': comparison_results})
 
