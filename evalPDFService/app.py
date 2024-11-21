@@ -74,7 +74,7 @@ def extract_text_and_annotations(pdf_path):
 
     def save_question():
         """Sauvegarde la question actuelle dans grouped_questions si elle existe."""
-        if current_question:  # Assurer qu'il y a bien une question
+        if current_question:  # Vérifier qu'une question existe
             # Déterminer le type de question
             if "Vrai ou Faux" in current_question:
                 question_type = "true_false"
@@ -98,36 +98,50 @@ def extract_text_and_annotations(pdf_path):
         blocks = list(page.get_text('blocks'))
 
         for block in blocks:
-            # Vérification et extraction du texte
-            if block and len(block) >= 5 and block[4] is not None:
-                block_text = clean_text(block[4])
-                bbox = block[:4]  # Coordonnées de la boîte englobante du texte
+            # Vérifier que le block est valide
+            if not block or len(block) < 5:
+                logger.info(f"Skipping invalid block on page {page_num}: {block}")
+                continue
 
-                # Détection des questions numérotées (ex: ➊, ➋, 1), etc.
-                if re.match(r'^(\d+\.|\d+\)|[➊➋➌➍➎➏➐➑➒])', block_text.strip()):
-                    save_question()  # Sauvegarder la question précédente avant de passer à la suivante
+            block_text = block[4] if len(block) > 4 and block[4] is not None else ""
+            if not block_text.strip():
+                logger.info(f"Empty or invalid block text on page {page_num}: {block}")
+                continue
 
-                    # Initialiser une nouvelle question
-                    current_question = block_text
-                    current_options = []  # Réinitialiser les options
-                    current_bbox = bbox  # Enregistrer la boîte englobante de la question
-                    current_page_num = page_num  # Enregistrer la page
+            # Nettoyer le texte et extraire la boîte englobante
+            block_text = clean_text(block_text)
+            bbox = block[:4] if len(block) >= 4 else None
+            if not bbox or not all(isinstance(coord, (int, float)) for coord in bbox):
+                logger.info(f"Invalid bounding box for block on page {page_num}: {block}")
+                continue
 
-                # Détection des options de réponses (ex: ❍a., ❍b.) et gestion de plusieurs options dans une seule ligne
-                elif re.search(r'([A-Da-d]\)|❍[a-d]\.|[A-Da-d]\.)', block_text.strip()):
-                    # Si plusieurs options sont présentes dans une seule ligne, on les divise
-                    options_in_block = re.split(r'([A-Da-d]\)|❍[a-d]\.|[A-Da-d]\.)', block_text)
-                    options_in_block = [opt.strip() for opt in options_in_block if opt.strip()]  # Nettoyer la liste
+            # Détection des questions numérotées
+            if re.match(r'^(\d+\.|\d+\)|[➊➋➌➍➎➏➐➑➒])', block_text.strip()):
+                save_question()  # Sauvegarder la question précédente avant de passer à la suivante
 
-                    # Ajouter chaque option individuellement
-                    for option in options_in_block:
-                        if re.match(r'[A-Da-d]\)|❍', option):
-                            current_options.append(option)
-                        else:
-                            # Si l'option n'a pas le préfixe correct, on l'ajoute à la dernière option
+                # Initialiser une nouvelle question
+                current_question = block_text
+                current_options = []  # Réinitialiser les options
+                current_bbox = bbox  # Enregistrer la boîte englobante de la question
+                current_page_num = page_num  # Enregistrer la page
+
+            # Détection des options de réponses
+            elif re.search(r'([A-Da-d]\)|❍[a-d]\.|[A-Da-d]\.)', block_text.strip()):
+                # Si plusieurs options sont présentes dans une seule ligne, on les divise
+                options_in_block = re.split(r'([A-Da-d]\)|❍[a-d]\.|[A-Da-d]\.)', block_text)
+                options_in_block = [opt.strip() for opt in options_in_block if opt.strip()]  # Nettoyer la liste
+
+                # Ajouter chaque option individuellement
+                for option in options_in_block:
+                    if re.match(r'[A-Da-d]\)|❍', option):
+                        current_options.append(option)
+                    else:
+                        # Si l'option n'a pas le préfixe correct, on l'ajoute à la dernière option
+                        if current_options:
                             current_options[-1] += " " + option
 
-                    # Ajuster la bounding box pour inclure la nouvelle option
+                # Ajuster la bounding box pour inclure la nouvelle option
+                if current_bbox:
                     current_bbox = (
                         min(current_bbox[0], bbox[0]),
                         min(current_bbox[1], bbox[1]),
@@ -135,9 +149,9 @@ def extract_text_and_annotations(pdf_path):
                         max(current_bbox[3], bbox[3])
                     )
 
-                # Ajout des informations spécifiques (par exemple, si c'est une partie d'une question)
-                elif current_question:
-                    current_question += " " + block_text
+            # Ajout des informations spécifiques (par exemple, si c'est une partie d'une question)
+            elif current_question:
+                current_question += " " + block_text
 
     save_question()  # Sauvegarder la dernière question après la fin de la boucle
 
@@ -148,29 +162,29 @@ def associate_responses_with_questions(grouped_questions, annotations):
 
     for page_num, annotation_list in annotations.items():
         for annotation in annotation_list:
-            # Vérifier que l'annotation est bien un dictionnaire
-            if not isinstance(annotation, dict):
-                logger.info(f"Unexpected type for annotation: {type(annotation)} - {annotation}")
+            # Vérification que l'annotation est un dictionnaire valide
+            if not annotation or not isinstance(annotation, dict):
+                logger.info(f"Invalid annotation type: {type(annotation)} - {annotation}")
                 continue
 
             annotation_rect = annotation.get('rect')
-            if not isinstance(annotation_rect, fitz.Rect):
-                logger.info(f"Unexpected type for annotation rect: {type(annotation.get('rect'))}")
+            if not annotation_rect or not isinstance(annotation_rect, fitz.Rect):
+                logger.info(f"Invalid or missing 'rect' in annotation: {annotation}")
                 continue
 
             response_text = annotation.get('text_above', '').strip()
             found_question = None
-            question_rect_final = None  # Initialisation de question_rect_final
-           
-            # Gestion des annotations de type 'manual_check' (cases cochées)
-            if annotation['type'] == 'manual_check':
-                if len(annotation['text']) > 0:
+            question_rect_final = None
+
+            # Gestion des annotations de type 'manual_check'
+            if annotation.get('type') == 'manual_check':
+                annotation_text = annotation.get('text', '').strip()
+                if annotation_text:
                     for question in grouped_questions:
-                        if question['type'] in ['multiple_choice', 'true_false', 'highlight_the_correct_answer']:
-                            question_rect = fitz.Rect(question['bbox'])
-                            # Vérifier si la question est proche de l'annotation
-                            for option in question['options']:
-                                if normalize_text(annotation['text']) in normalize_text(option):
+                        if question.get('type') == 'multiple_choice':
+                            question_rect = fitz.Rect(question.get('bbox', [0, 0, 0, 0]))
+                            for option in question.get('options', []):
+                                if normalize_text(annotation_text) in normalize_text(option):
                                     found_question = question
                                     question_rect_final = question_rect
                                     break
@@ -178,14 +192,13 @@ def associate_responses_with_questions(grouped_questions, annotations):
                             break
 
             # Gestion des annotations de type 'manual_line'
-            elif annotation['type'] == 'manual_line':
+            elif annotation.get('type') == 'manual_line':
                 normalized_response_text = normalize_text(response_text)
-                if len(response_text) > 0:
-                    # Chercher une correspondance avec une question à choix multiples
+                if normalized_response_text:
                     for question in grouped_questions:
-                        if question['type'] in ['multiple_choice', 'true_false']:
-                            question_rect = fitz.Rect(question['bbox'])
-                            for option in question['options']:
+                        if question.get('type') == 'multiple_choice':
+                            question_rect = fitz.Rect(question.get('bbox', [0, 0, 0, 0]))
+                            for option in question.get('options', []):
                                 if normalized_response_text in normalize_text(option):
                                     found_question = question
                                     question_rect_final = question_rect
@@ -193,17 +206,16 @@ def associate_responses_with_questions(grouped_questions, annotations):
                         if found_question:
                             break
 
-                    # Si aucune correspondance n'est trouvée, chercher une question ouverte
+                    # Chercher une question ouverte
                     if not found_question:
                         max_y = -float('inf')
-                        annotation_rect = fitz.Rect(annotation['rect'])
                         annotation_center = get_center((annotation_rect.x0, annotation_rect.y0, annotation_rect.x1, annotation_rect.y1))
                         max_distance = 100
                         min_distance = float('inf')
-                        
+
                         for question in grouped_questions:
-                            if question['type'] == 'open_ended' and question['page_num'] == annotation['page_num']:
-                                question_rect = fitz.Rect(question['bbox'])
+                            if question.get('type') == 'open_ended' and question.get('page_num') == page_num:
+                                question_rect = fitz.Rect(question.get('bbox', [0, 0, 0, 0]))
                                 question_center = get_center(question_rect)
                                 distance = euclidean_distance(annotation_center, question_center)
 
@@ -216,12 +228,12 @@ def associate_responses_with_questions(grouped_questions, annotations):
                                         max_y = question_rect.y1
                                         found_question = question
                                         question_rect_final = question_rect
-            
-            # Ajouter la correspondance question-réponse uniquement si une question et son rectangle sont trouvés
+
+            # Ajouter la correspondance question-réponse uniquement si elle est valide
             if found_question and question_rect_final:
                 question_response_mapping.append({
-                    'question': found_question['question'],
-                    'response': response_text if annotation['type'] != 'manual_check' else annotation['text'],
+                    'question': found_question.get('question', ''),
+                    'response': response_text if annotation.get('type') != 'manual_check' else annotation.get('text', ''),
                     'page_num': page_num,
                     'question_rect': rect_to_dict(question_rect_final)
                 })
