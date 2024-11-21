@@ -59,6 +59,9 @@ def rect_to_dict(rect):
         'y1': rect.y1
     }
 
+
+
+
 def extract_text_and_annotations(pdf_path):
     doc = fitz.open(pdf_path)
     grouped_questions = []
@@ -72,13 +75,22 @@ def extract_text_and_annotations(pdf_path):
     def save_question():
         """Sauvegarde la question actuelle dans grouped_questions si elle existe."""
         if current_question:  # Assurer qu'il y a bien une question
-            question_type = 'multiple_choice' if current_options else 'open_ended'  # Déterminer le type de question
+            # Déterminer le type de question
+            if "Vrai ou Faux" in current_question:
+                question_type = "true_false"
+            elif "Complétez" in current_question:
+                question_type = "fill_in_the_blank"
+            elif "Soulignez" in current_question:
+                question_type = "highlight_the_correct_answer"
+            else:
+                question_type = "multiple_choice" if current_options else "open_ended"
+
             grouped_questions.append({
                 'question': current_question.strip(),
                 'options': current_options[:],  # Copie de la liste des options
                 'bbox': current_bbox,  # Bounding box de la question
                 'page_num': current_page_num,  # Numéro de la page
-                'type': question_type  # Type de la question : multiple_choice ou open_ended
+                'type': question_type  # Type de la question
             })
 
     for page_num in range(len(doc)):
@@ -92,7 +104,7 @@ def extract_text_and_annotations(pdf_path):
                 bbox = block[:4]  # Coordonnées de la boîte englobante du texte
 
                 # Détection des questions numérotées (ex: ➊, ➋, 1), etc.
-                if re.match(r'(\d+\)|[➊➋➌➍➎➏➐➑➒])', block_text.strip()):
+                if re.match(r'^(\d+\.|\d+\)|[➊➋➌➍➎➏➐➑➒])', block_text.strip()):
                     save_question()  # Sauvegarder la question précédente avant de passer à la suivante
 
                     # Initialiser une nouvelle question
@@ -102,14 +114,14 @@ def extract_text_and_annotations(pdf_path):
                     current_page_num = page_num  # Enregistrer la page
 
                 # Détection des options de réponses (ex: ❍a., ❍b.) et gestion de plusieurs options dans une seule ligne
-                elif re.search(r'(❍[a-d]\.|[a-d]\.)', block_text.strip()):
+                elif re.search(r'([A-Da-d]\)|❍[a-d]\.|[A-Da-d]\.)', block_text.strip()):
                     # Si plusieurs options sont présentes dans une seule ligne, on les divise
-                    options_in_block = re.split(r'(❍[a-d]\.|[a-d]\.)', block_text)
+                    options_in_block = re.split(r'([A-Da-d]\)|❍[a-d]\.|[A-Da-d]\.)', block_text)
                     options_in_block = [opt.strip() for opt in options_in_block if opt.strip()]  # Nettoyer la liste
 
                     # Ajouter chaque option individuellement
                     for option in options_in_block:
-                        if re.match(r'[a-d]\.|❍', option):
+                        if re.match(r'[A-Da-d]\)|❍', option):
                             current_options.append(option)
                         else:
                             # Si l'option n'a pas le préfixe correct, on l'ajoute à la dernière option
@@ -122,6 +134,10 @@ def extract_text_and_annotations(pdf_path):
                         max(current_bbox[2], bbox[2]),
                         max(current_bbox[3], bbox[3])
                     )
+
+                # Ajout des informations spécifiques (par exemple, si c'est une partie d'une question)
+                elif current_question:
+                    current_question += " " + block_text
 
     save_question()  # Sauvegarder la dernière question après la fin de la boucle
 
@@ -150,7 +166,7 @@ def associate_responses_with_questions(grouped_questions, annotations):
             if annotation['type'] == 'manual_check':
                 if len(annotation['text']) > 0:
                     for question in grouped_questions:
-                        if question['type'] == 'multiple_choice':
+                        if question['type'] in ['multiple_choice', 'true_false', 'highlight_the_correct_answer']:
                             question_rect = fitz.Rect(question['bbox'])
                             # Vérifier si la question est proche de l'annotation
                             for option in question['options']:
@@ -167,7 +183,7 @@ def associate_responses_with_questions(grouped_questions, annotations):
                 if len(response_text) > 0:
                     # Chercher une correspondance avec une question à choix multiples
                     for question in grouped_questions:
-                        if question['type'] == 'multiple_choice':
+                        if question['type'] in ['multiple_choice', 'true_false']:
                             question_rect = fitz.Rect(question['bbox'])
                             for option in question['options']:
                                 if normalized_response_text in normalize_text(option):
@@ -213,7 +229,8 @@ def associate_responses_with_questions(grouped_questions, annotations):
                 logger.info(f"No matching question found for annotation on page {page_num}: {annotation}")
 
     return question_response_mapping
- 
+
+
 def get_center(rect):
     """
     Calcule le centre d'un rectangle.
@@ -478,6 +495,7 @@ def analyze_qcm():
 
         # Nettoyer les réponses correctes
         cleaned_correct_answers = [{'answer': clean_html(ans['answer']), 'question': clean_html(ans['question']), 'points': ans['points']} for ans in correct_answers]
+        logger.info("cleaned_correct_answers:>>>>>>>>>>>>", cleaned_correct_answers)
 
         # Extraire le texte et les annotations du PDF
         student_info, grouped_questions = extract_text_and_annotations(pdf_path)
