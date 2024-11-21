@@ -23,7 +23,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="bg-gray-700 text-white h-screen w-60 flex flex-col fixed">
+    <div className="bg-[#1f81a9] text-white h-screen w-60 flex flex-col fixed">
       <div className="p-4 flex items-center justify-center">
         <img
           src="/images/Mi Tsara 2.png"
