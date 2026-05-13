@@ -22,6 +22,26 @@ const fontkit = require('fontkit');
 const Activity = require("../models/Activity");
 const FormData = require('form-data');
 
+const LOCAL_STORAGE_PREFIX = 'local/';
+const LOCAL_UPLOADS_ROOT = path.join(__dirname, '..', 'uploads');
+
+const isLocalStorageKey = (fileKey) =>
+  typeof fileKey === 'string' && fileKey.startsWith(LOCAL_STORAGE_PREFIX);
+
+const getLocalRelativePath = (fileKey) => fileKey.slice(LOCAL_STORAGE_PREFIX.length);
+
+const getLocalFilePath = (fileKey) =>
+  path.join(LOCAL_UPLOADS_ROOT, getLocalRelativePath(fileKey));
+
+const getPublicFileUrl = (req, fileKey) => {
+  if (isLocalStorageKey(fileKey)) {
+    const relativeUrl = getLocalRelativePath(fileKey).split(path.sep).join('/');
+    return `${req.protocol}://${req.get('host')}/uploads/${relativeUrl}`;
+  }
+
+  return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+};
+
 // Configurer AWS Textract
 const textract = new AWS.Textract({
   region: process.env.AWS_REGION,
@@ -133,18 +153,43 @@ const getAnswerSheetsByExam = async (req, res) => {
   const { session, semestre, subject_id, academicYear, class_id } = req.body;
 
   try {
+    if (!subject_id || !class_id) {
+      return res.status(400).json({
+        message: "Les champs class_id et subject_id sont requis.",
+      });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(subject_id) ||
+      !mongoose.Types.ObjectId.isValid(class_id)
+    ) {
+      return res.status(400).json({
+        message: "class_id ou subject_id invalide.",
+      });
+    }
+
     // Convertir les IDs en ObjectId de Mongoose
     const subjectObjectId = new mongoose.Types.ObjectId(subject_id);
     const classObjectId = new mongoose.Types.ObjectId(class_id);
 
     // Recherche de l'examen avec les critères fournis
-    const exam = await Exam.findOne({
+    let exam = await Exam.findOne({
       session,
       semestre,
       subject_id: subjectObjectId,
       academicYear,
       class_ids: { $in: [classObjectId] },
     });
+
+    // Repli pour les cas de démonstration ou de filtres incomplets:
+    // si aucun examen exact n'est trouvé, on tente de retrouver
+    // le plus récent examen correspondant à la matière et à la classe.
+    if (!exam) {
+      exam = await Exam.findOne({
+        subject_id: subjectObjectId,
+        class_ids: { $in: [classObjectId] },
+      }).sort({ createdAt: -1 });
+    }
 
     if (!exam) {
       return res
@@ -169,24 +214,34 @@ const getAnswerSheetsByExam = async (req, res) => {
     const pdfData = [];
 
     for (let sheet of answerSheets) {
-      // Créez l'URL pour accéder au fichier directement depuis S3
       const pdfKey = sheet.sheet;
-      const s3Params = {
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: pdfKey,
-      };
-
       try {
-        // Vérifiez si le fichier existe dans S3
-        await s3.headObject(s3Params).promise();
+        if (isLocalStorageKey(pdfKey)) {
+          const localFilePath = getLocalFilePath(pdfKey);
+          if (!fs.existsSync(localFilePath)) {
+            console.warn(`Le fichier local ${localFilePath} est introuvable.`);
+            continue;
+          }
 
-        // Créez l'URL pour accéder au fichier directement depuis S3
-        const pdfUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${pdfKey}`;
+          pdfData.push({
+            answerSheetId: sheet._id,
+            studentName: sheet.student_matricule.name,
+            studentMatricule: sheet.student_matricule.matricule,
+            pdfUrl: getPublicFileUrl(req, pdfKey),
+          });
+          continue;
+        }
+
+        await s3.headObject({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: pdfKey,
+        }).promise();
+
         pdfData.push({
-          answerSheetId: sheet._id, // Ajout de l'ID de la feuille de réponse
+          answerSheetId: sheet._id,
           studentName: sheet.student_matricule.name,
           studentMatricule: sheet.student_matricule.matricule,
-          pdfUrl,
+          pdfUrl: getPublicFileUrl(req, pdfKey),
         });
       } catch (err) {
         console.warn(
@@ -207,18 +262,40 @@ const getSheetsCorrige = async (req, res) => {
   const { session, semestre, subject_id, academicYear, class_id } = req.body;
  
   try {
+    if (!subject_id || !class_id) {
+      return res.status(400).json({
+        message: "Les champs class_id et subject_id sont requis.",
+      });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(subject_id) ||
+      !mongoose.Types.ObjectId.isValid(class_id)
+    ) {
+      return res.status(400).json({
+        message: "class_id ou subject_id invalide.",
+      });
+    }
+
     // Convertir les IDs en ObjectId de Mongoose
     const subjectObjectId = new mongoose.Types.ObjectId(subject_id);
     const classObjectId = new mongoose.Types.ObjectId(class_id);
 
     // Recherche de l'examen avec les critères fournis
-    const exam = await Exam.findOne({
+    let exam = await Exam.findOne({
       session,
       semestre,
       subject_id: subjectObjectId,
       academicYear,
       class_ids: { $in: [classObjectId] },
     });
+
+    if (!exam) {
+      exam = await Exam.findOne({
+        subject_id: subjectObjectId,
+        class_ids: { $in: [classObjectId] },
+      }).sort({ createdAt: -1 });
+    }
 
     if (!exam) {
       return res
@@ -242,25 +319,34 @@ const getSheetsCorrige = async (req, res) => {
 
     const pdfData = [];
     for (let sheet of answerSheets) {
-      // Créez l'URL pour accéder au fichier directement depuis S3
       const pdfKey = sheet.sheet_corrige;
-      const s3Params = {
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: pdfKey,
-      };
-
       try {
-        // Vérifiez si le fichier existe dans S3
-        await s3.headObject(s3Params).promise();
+        if (isLocalStorageKey(pdfKey)) {
+          const localFilePath = getLocalFilePath(pdfKey);
+          if (!fs.existsSync(localFilePath)) {
+            console.warn(`Le fichier local corrigé ${localFilePath} est introuvable.`);
+            continue;
+          }
 
-        // Créez l'URL pour accéder au fichier directement depuis S3
-        const pdfUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${pdfKey}`;
+          pdfData.push({
+            answerSheetId: sheet._id,
+            studentName: sheet.student_matricule.name,
+            studentMatricule: sheet.student_matricule.matricule,
+            pdfUrl: getPublicFileUrl(req, pdfKey),
+          });
+          continue;
+        }
+
+        await s3.headObject({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: pdfKey,
+        }).promise();
 
         pdfData.push({
-          answerSheetId: sheet._id, // Ajout de l'ID de la feuille de réponse
+          answerSheetId: sheet._id,
           studentName: sheet.student_matricule.name,
           studentMatricule: sheet.student_matricule.matricule,
-          pdfUrl,
+          pdfUrl: getPublicFileUrl(req, pdfKey),
         });
       } catch (err) {
         console.warn(
@@ -531,14 +617,20 @@ const correctAnswerSheet = async (req, res) => {
 
     console.log("questions with answer ..........")
 
-    const s3Object = await s3
-      .getObject({
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: answerSheet.sheet,
-      })
-      .promise();
+    let pdfBytes;
+    if (isLocalStorageKey(answerSheet.sheet)) {
+      const localFilePath = getLocalFilePath(answerSheet.sheet);
+      pdfBytes = fs.readFileSync(localFilePath);
+    } else {
+      const s3Object = await s3
+        .getObject({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: answerSheet.sheet,
+        })
+        .promise();
 
-    const pdfBytes = s3Object.Body;
+      pdfBytes = s3Object.Body;
+    }
 
     const tempPdfPath = `/tmp/${answerSheetId}.pdf`;
     fs.writeFileSync(tempPdfPath, pdfBytes);
@@ -612,29 +704,40 @@ console.log("Writing................")
 
     fs.writeFileSync(correctedFilePath, correctedPdfBytes);
 
-    const correctedS3Key = `corrected-answer-sheets/${correctedFileName}`;
-    const uploadParams = {
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: correctedS3Key,
-      Body: fs.createReadStream(correctedFilePath),
-      ContentType: "application/pdf",
-    };
-    const s3Response = await s3.upload(uploadParams).promise();
+    let correctedPdfUrl;
+    if (isLocalStorageKey(answerSheet.sheet)) {
+      const correctedRelativePath = path.join('corrected-answer-sheets', correctedFileName);
+      const correctedLocalPath = path.join(LOCAL_UPLOADS_ROOT, correctedRelativePath);
+      fs.mkdirSync(path.dirname(correctedLocalPath), { recursive: true });
+      fs.copyFileSync(correctedFilePath, correctedLocalPath);
+      answerSheet.sheet_corrige = `${LOCAL_STORAGE_PREFIX}${correctedRelativePath}`;
+      correctedPdfUrl = getPublicFileUrl(req, answerSheet.sheet_corrige);
+    } else {
+      const correctedS3Key = `corrected-answer-sheets/${correctedFileName}`;
+      const uploadParams = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: correctedS3Key,
+        Body: fs.createReadStream(correctedFilePath),
+        ContentType: "application/pdf",
+      };
+      const s3Response = await s3.upload(uploadParams).promise();
+      answerSheet.sheet_corrige = correctedS3Key;
+      correctedPdfUrl = s3Response.Location;
+    }
 
-    answerSheet.sheet_corrige = correctedS3Key;
     answerSheet.note = totalPoints;
     await answerSheet.save();
 
     res.status(200).json({
       message: "Correction terminée",
-      correctedPdfUrl: s3Response.Location,
+      correctedPdfUrl,
     });
 
     // Enregistrement de l'activité avec les anciennes et nouvelles informations
     await Activity.create({
       userId: req.user._id,  // ID de l'utilisateur qui a effectué l'action
       action: "Correction des feuilles ",
-      description: `Feuille de réponse corrigée pour l'examen: ${answerSheet.exam_id.name}, \nÉtudiant: ${answerSheet.student_matricule}, \nNote finale: ${totalPoints}, \nLien du PDF corrigé: ${s3Response.Location}`
+      description: `Feuille de réponse corrigée pour l'examen: ${answerSheet.exam_id.name}, \nÉtudiant: ${answerSheet.student_matricule}, \nNote finale: ${totalPoints}, \nLien du PDF corrigé: ${correctedPdfUrl}`
     });
 
     // Nettoyer les fichiers temporaires

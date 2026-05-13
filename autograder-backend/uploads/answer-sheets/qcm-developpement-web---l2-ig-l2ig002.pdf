@@ -1,0 +1,120 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 2347 >>
+stream
+BT
+/F1 11 Tf
+50 800 Td
+(QCM Developpement Web - L2 IG) Tj
+0 -16 Td
+(Session: 1ère session | Semestre: 1er semestre | Année: 2025-2026) Tj
+0 -16 Td
+(Étudiant: Toky Nomena \(L2IG002\)) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(1. Vrai ou Faux : Un algorithme est une suite finie et ordonnée d’instructions.) Tj
+0 -16 Td
+(Répondez par Vrai ou Faux.) Tj
+0 -16 Td
+(Réponse de l'étudiant: Faux) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(2. Cocher la bonne réponse : Quelle structure permet de répéter un bloc) Tj
+0 -16 Td
+(d’instructions ? A. Variable  B. Boucle  C. Commentaire  D. Constante) Tj
+0 -16 Td
+(Réponse de l'étudiant: B. Boucle) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(3. Souligner la bonne réponse : Le symbole utilisé pour une condition d’égalité) Tj
+0 -16 Td
+(est == / ++ / -- / &&) Tj
+0 -16 Td
+(Réponse de l'étudiant: ==) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(4. Cocher la bonne réponse : Quelle structure est la plus adaptée pour représenter) Tj
+0 -16 Td
+(une décision ? A. if  B. for  C. string  D. array) Tj
+0 -16 Td
+(Réponse de l'étudiant: B. for) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(5. Vrai ou Faux : Une boucle while exécute toujours son bloc au moins une fois.) Tj
+0 -16 Td
+(Réponse de l'étudiant: Faux) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(6. Cocher la bonne réponse : Quel mot-clé sert à déclarer une constante en) Tj
+0 -16 Td
+(JavaScript ? A. let  B. const  C. loop  D. fixed) Tj
+0 -16 Td
+(Réponse de l'étudiant: B. const) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(7. Souligner la bonne réponse : Pour stocker plusieurs valeurs du même type, on) Tj
+0 -16 Td
+(utilise le plus souvent tableau / condition / fonction / commentaire) Tj
+0 -16 Td
+(Réponse de l'étudiant: condition) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(8. Cocher la bonne réponse : Quelle est la complexité temporelle d’une recherche) Tj
+0 -16 Td
+(linéaire dans le pire des cas ? A. O\(1\)  B. O\(log n\)  C. O\(n\)  D. O\(n²\)) Tj
+0 -16 Td
+(Réponse de l'étudiant: C. O\(n\)) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(9. Vrai ou Faux : Une variable peut changer de valeur pendant l’exécution du) Tj
+0 -16 Td
+(programme.) Tj
+0 -16 Td
+(Réponse de l'étudiant: Vrai) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(10. Cocher la bonne réponse : Quel énoncé permet d’exécuter un bloc si une) Tj
+0 -16 Td
+(condition est vraie ? A. return  B. switch  C. if  D. break) Tj
+0 -16 Td
+(Réponse de l'étudiant: D. break) Tj
+0 -16 Td
+() Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+2710
+%%EOF

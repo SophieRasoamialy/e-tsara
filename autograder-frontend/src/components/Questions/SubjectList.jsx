@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Cookies from "js-cookie";
 import axios from "axios";
-import env from "react-dotenv";
+import { jwtDecode } from "jwt-decode";
+import env from "../../config/env";
 
 const SubjectList = () => {
   const [levels, setLevels] = useState([]);
@@ -14,6 +15,14 @@ const SubjectList = () => {
   const navigate = useNavigate();
 
   const apiUrl = env.API_URL || "";
+  const token = Cookies.get("token");
+  const userRole = token ? jwtDecode(token).role : null;
+
+  const getAuthHeaders = () => ({
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   useEffect(() => {
     fetchLevels();
@@ -26,15 +35,9 @@ const SubjectList = () => {
 
   const fetchLevels = async () => {
     try {
-      const token = Cookies.get("token");
-      const response = await axios.get(
-        `${apiUrl}/api/matieres/me/classes`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const endpoint =
+        userRole === "professeur" ? "/api/matieres/me/classes" : "/api/classes";
+      const response = await axios.get(`${apiUrl}${endpoint}`, getAuthHeaders());
       setLevels(response.data);
     } catch (error) {
       console.error("Erreur lors de la récupération des niveaux :", error);
@@ -48,17 +51,22 @@ const SubjectList = () => {
     setSubjects([]);
 
     try {
-      const token = Cookies.get("token");
-      const response = await axios.get(
-        `${apiUrl}/api/exams/level/${levelIds.join(",")}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      let data = [];
 
-      const data = response.data;
+      if (userRole === "professeur") {
+        const response = await axios.get(
+          `${apiUrl}/api/exams/level/${levelIds.join(",")}`,
+          getAuthHeaders()
+        );
+        data = response.data;
+      } else {
+        const response = await axios.get(`${apiUrl}/api/exams`, getAuthHeaders());
+        const selectedLevelSet = new Set(levelIds);
+        data = response.data.filter((exam) =>
+          exam.class_ids.some((classItem) => selectedLevelSet.has(classItem._id))
+        );
+      }
+
       if (data.length === 0) {
         setNoSubjects(true);
       } else {

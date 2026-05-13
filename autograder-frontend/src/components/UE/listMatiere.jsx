@@ -3,7 +3,7 @@ import axios from "axios";
 import { FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
 import SubjectModal from "./matiereModal";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 function ListMatiere({ module }) {
   const [subjects, setSubjects] = useState([]);

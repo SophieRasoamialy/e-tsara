@@ -4,7 +4,7 @@ import Modal from "./modal";
 import Sidebar from "../components/Sidebar";
 import { FaSearch, FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 function ListNiveau() {
   const [classes, setClasses] = useState([]);

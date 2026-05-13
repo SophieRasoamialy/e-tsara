@@ -4,7 +4,7 @@ import UserModal from "./userModal";
 import Sidebar from "../components/Sidebar";
 import { FaSearch, FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 function UserList() {
   const [users, setUsers] = useState([]);

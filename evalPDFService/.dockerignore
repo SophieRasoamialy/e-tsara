@@ -22,10 +22,23 @@ wheels/
 
 # Environnements virtuels
 .env
+.env.*
 .venv
+.venv/
 env/
 venv/
 ENV/
+myenv/
+
+# Python caches / tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.python-version
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
 
 # IDE
 .idea/
@@ -40,10 +53,6 @@ Thumbs.db
 # Git
 .git
 .gitignore
-
-# Docker
-Dockerfile
-.dockerignore
 
 # Logs et données
 *.log

@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const mongoose = require('mongoose');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 const specs = require('./swagger');
 const userRoutes = require('./routes/userRoutes');
 const niveauRoutes = require('./routes/niveauRoutes');
@@ -67,6 +68,7 @@ mongoose.connect(process.env.MONGO_URI, {
 // Middleware pour parsing JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Utilisation des routes utilisateur
 app.get('/api', (req, res) => {

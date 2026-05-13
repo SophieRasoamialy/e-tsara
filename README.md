@@ -1,147 +1,149 @@
-# E-Tsara - Student Sheet Auto-Correction Platform
+# E-Tsara
 
-## 📝 Project Description
+E-Tsara est une plateforme de gestion et de correction automatique de copies d'examen.
 
-E-Tsara is an innovative web application enabling automatic self-correction of student sheets. It provides a modern technological solution to simplify and accelerate the academic evaluation process.
+## Technologies
 
-## 🚀 Technologies Used
+- Frontend : React
+- Backend : Node.js / Express
+- Service PDF : Flask
+- Base de données : MongoDB
+- Exécution locale : Docker Compose
 
-- **Frontend**: React.js
-- **Backend**: Node.js 
-- **Additional Services**: 
-  - Flask (complementary service)
-  - MongoDB (database)
-- **Deployment**: Kubernetes, Docker, AWS EKS
-- **CI/CD**: GitHub Actions
+## Structure du projet
 
-## 🛠 Technical Architecture
+- `autograder-frontend/` : interface utilisateur
+- `autograder-backend/` : API principale
+- `evalPDFService/` : analyse PDF et correction
+- `docker-compose.yml` : orchestration locale des services
 
-The application is built with a microservices architecture comprising:
-- A React frontend
-- A Node.js backend
-- A Flask service for specific processing
-- A MongoDB database
-- Kubernetes deployment configuration
+## Lancement en local
 
-## 📋 DevOps Prerequisites
-
-Before starting, ensure you have the following tools and access:
-
-- **AWS CLI** installed and configured on your machine
-- **kubectl** installed to interact with your Kubernetes cluster
-- **eksctl** installed to facilitate EKS cluster management
-- **Docker** and **Docker Compose**
-- An AWS account with necessary permissions:
-  - IAM role creation
-  - EKS cluster management
-  - CloudWatch usage
-- Access to a Kubernetes cluster (EKS or other) for testing
-
-### AWS Configuration
-
-1. Install AWS CLI:
-```bash
-pip install awscli
-aws configure
-```
-
-2. Configure your AWS credentials with required rights
-
-3. Install eksctl:
-```bash
-# For macOS
-brew tap weaveworks/tap
-brew install weaveworks/tap/eksctl
-
-# For Linux 
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
-```
-
-## 🔧 Kubernetes Deployment
-
-### Deployment File Structure
-
-- `mongo-deployment.yaml`: MongoDB database deployment
-- `backend-deployment.yaml`: Node.js backend deployment
-- `frontend-deployment.yaml`: React frontend deployment
-- `flask-deployment.yaml`: Flask service deployment
-- `*-service.yaml`: Kubernetes service configurations
-
-### Deployment Commands
+Depuis la racine du projet :
 
 ```bash
-# Connect to EKS cluster
-aws eks update-kubeconfig --name projet-master-eks --region us-east-1
-
-# Create namespace
-kubectl create namespace autograder
-
-# Apply deployments
-kubectl apply -f mongo-deployment.yaml -n autograder
-kubectl apply -f backend-deployment.yaml -n autograder
-kubectl apply -f frontend-deployment.yaml -n autograder
-```
-
-## 🚀 GitHub Actions CI/CD Pipeline
-
-The CI/CD pipeline is configured to:
-- Conditionally build Docker images
-- Tag and push images to Docker Hub
-- Update Kubernetes cluster
-- Manage service-based deployments
-
-### Triggers
-- Triggered on pushes to the `main` branch
-- Conditional build and deployment based on code modifications
-
-### Main Steps
-- Code checkout
-- Docker image building
-- Docker Hub authentication
-- AWS configuration 
-- Kubeconfig update
-- Kubernetes deployment
-- Deployment updates
-
-## 🔐 Required Secrets
-
-Configure the following GitHub secrets:
-- `DOCKER_USERNAME`: Docker Hub username
-- `DOCKER_PASSWORD`: Docker Hub password
-- `AWS_ACCESS_KEY_ID`: AWS access key
-- `AWS_SECRET_ACCESS_KEY`: AWS secret key
-
-## 💻 Local Development Setup
-
-1. Clone the repository
-```bash
-git clone https://github.com/SophieRasoamialy/e-tsara.git
 cd e-tsara
+docker compose up --build
 ```
 
-2. Install dependencies
+Services disponibles :
+
+- Frontend : `http://localhost:3000`
+- Backend : `http://localhost:8000`
+- Service Flask : `http://localhost:5000`
+- MongoDB : `mongodb://localhost:27017/autograderDB`
+
+Commandes utiles :
+
 ```bash
-npm install
+docker compose up --build -d
+docker compose logs -f
+docker compose down
 ```
 
-3. Set up environment variables
-- Copy `.env.example` to `.env`
-- Fill in the necessary configurations
+Remarques :
 
-4. Start the application
-```bash
-docker-compose up
+- utiliser `--build` après une modification du code
+- éviter `docker compose down -v` si vous voulez conserver les données MongoDB
+
+## Comptes de test
+
+- Admin : `admin@gmail.com` / `admin@1234`
+- Enseignant : `enseignant.ig@gmail.com` / `prof@1234`
+- Enseignant : `enseignant.bd@gmail.com` / `prof@1234`
+- Personnel : `personnel.scolarite@gmail.com` / `personnel@1234`
+
+## Services utilisés
+
+- `frontend`
+  Application React accessible sur `http://localhost:3000`
+- `backend`
+  API Node.js et Express accessible sur `http://localhost:8000`
+- `flask`
+  Service Python pour l'analyse PDF et la correction accessible sur `http://localhost:5000`
+- `mongo`
+  Base de données MongoDB utilisée par le backend
+- `seed`
+  Service d'initialisation des données de test
+
+## Variables d'environnement
+
+### Backend
+
+Fichier : `autograder-backend/.env`
+
+```env
+PORT=8000
+MONGO_URI=mongodb://127.0.0.1:27017/autograderDB
+SECRET_KEY=change-me
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_REGION=us-east-1
+S3_BUCKET_NAME=your-bucket-name
 ```
 
-## 🤝 Contributing
+Variables principales :
 
-1. Fork the project
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+- `PORT` : port du backend
+- `MONGO_URI` : connexion à MongoDB
+- `SECRET_KEY` : signature des tokens JWT
+- `AWS_ACCESS_KEY_ID` : accès AWS
+- `AWS_SECRET_ACCESS_KEY` : secret AWS
+- `AWS_REGION` : région AWS
+- `S3_BUCKET_NAME` : bucket S3 pour les fichiers
 
-## 👥 Authors
+### Service Flask
 
-- Sophie Rasoamialy 
+Fichier : `evalPDFService/.env`
+
+```env
+OPENAI_API_KEY=your-openai-key
+OPENAI_MODEL=gpt-5-nano
+OPENAI_TIMEOUT_SECONDS=20
+OPENAI_GRADING_ENABLED=true
+LOCAL_CORRECT_THRESHOLD=0.72
+QUESTION_MATCH_THRESHOLD=0.45
+```
+
+Variables principales :
+
+- `OPENAI_API_KEY` : clé API OpenAI
+- `OPENAI_MODEL` : modèle utilisé pour la correction
+- `OPENAI_TIMEOUT_SECONDS` : délai maximal d'appel OpenAI
+- `OPENAI_GRADING_ENABLED` : active ou non la correction OpenAI
+- `LOCAL_CORRECT_THRESHOLD` : seuil de validation locale
+- `QUESTION_MATCH_THRESHOLD` : seuil de rapprochement des questions
+
+## Fonctionnalités principales
+
+- authentification par rôle
+- gestion des sujets d'examen
+- création de questions QCM
+- gestion et consultation des feuilles de copie
+- correction automatique via le service Flask
+
+## Captures
+
+### Connexion
+
+![Connexion](docs/screenshots/login.png)
+
+### Tableau de bord
+
+![Tableau de bord](docs/screenshots/dashboard.png)
+
+### Liste des sujets
+
+![Liste des sujets](docs/screenshots/subject.png)
+
+### Création d'un examen
+
+![Création d'un examen](docs/screenshots/create-exam.png)
+
+### Sujet d'examen
+
+![Sujet d'examen](docs/screenshots/exam.png)
+
+### Liste des feuilles de copie
+
+![Liste des feuilles de copie](docs/screenshots/answer-sheet-list.png)

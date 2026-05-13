@@ -9,7 +9,7 @@ import MySwal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 import ReactPaginate from "react-paginate";
 import { ChevronLeftCircle, ChevronRightCircle } from "lucide-react";
-import env from "react-dotenv";
+import env from "../../config/env";
 import Cookies from "js-cookie";
 
 // Styles réutilisables
@@ -72,6 +72,15 @@ const ListCopy = () => {
   };
 
   const fetchPdfs = async () => {
+    if (!session || !semestre || !classe || !matiere || !academicYear) {
+      await MySwal.fire({
+        icon: "warning",
+        title: "Champs requis",
+        text: "Veuillez renseigner la session, le semestre, la classe, la matière et l'année universitaire.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -95,10 +104,11 @@ const ListCopy = () => {
         const data = await response.json();
         setPdfUrls(data.pdfData);
       } else {
+        const errorData = await response.json().catch(() => ({}));
         await MySwal.fire({
           icon: "error",
           title: "Erreur",
-          text: "Erreur lors de la récupération des PDFs.",
+          text: errorData.message || "Erreur lors de la récupération des PDFs.",
         });
       }
     } catch (error) {

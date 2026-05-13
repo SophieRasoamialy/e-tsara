@@ -11,7 +11,7 @@ import {
   FaDownload,
 } from "react-icons/fa";
 import "./print.css";
-import env from "react-dotenv";
+import env from "../../config/env";
 import { fontBase64 } from "../../assets/fontBase64";
 
 const SubjectDetails = () => {

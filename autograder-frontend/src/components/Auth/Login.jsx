@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock, FaEyeSlash, FaEye } from "react-icons/fa";
-import Cookies from "js-cookie";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import env from "react-dotenv";
+import env from "../../config/env";
+import { useAuth } from "../../context/AuthContext";
 
 const schema = z.object({
   email: z
@@ -20,6 +20,7 @@ const schema = z.object({
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { setAuthToken } = useAuth();
   const {
     register,
     handleSubmit,
@@ -28,12 +29,8 @@ const Login = () => {
     resolver: zodResolver(schema),
   });
   const apiUrl = env.API_URL || "";
-  
-console.log("env..", env.API_URL);
-console.log("api..",apiUrl);
+
   const onSubmit = async (data) => {
-    console.log('Sending request to:', `${apiUrl}/api/users/login`);
-      console.log('Request data:', data);
     try {
       const response = await fetch(`${apiUrl}/api/users/login`, {
         method: "POST",
@@ -42,31 +39,21 @@ console.log("api..",apiUrl);
         },
         body: JSON.stringify(data),
       });
+      const contentType = response.headers.get("content-type") || "";
+      const responseData = contentType.includes("application/json")
+        ? await response.json()
+        : { msg: "Unexpected server response. Check API URL and backend status." };
 
       if (response.ok) {
-        const result = await response.json();
-        // Stocker le token dans les cookies avec SameSite et Secure pour éviter les avertissements du navigateur
-        Cookies.set("token", result.token, {
-          expires: 1,
-          sameSite: "Lax",
-          secure: false,
-        });
-        const storageToken = Cookies.get("token");
-        if (storageToken) {
-          console.log("Token found:------------", storageToken);
-        } else {
-          console.log("No token found----------");
-        }
-
+        setAuthToken(responseData.token);
         // Rediriger l'utilisateur vers une autre page après la connexion
         navigate("/");
       } else {
-        const errorData = await response.json();
-        console.error(errorData.msg);
-        alert("Login failed: " + errorData.msg);
+        console.error(responseData.msg);
+        alert("Login failed: " + responseData.msg);
       }
     } catch (error) {
-      console.error('Fetch error:', error);
+      console.error("Fetch error:", error);
     }
   };
 

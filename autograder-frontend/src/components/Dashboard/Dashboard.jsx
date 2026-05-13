@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { FaQuestionCircle, FaBell, FaEnvelope } from 'react-icons/fa';
 import Chart from 'chart.js/auto';
 import Sidebar from '../components/Sidebar';
-import env from "react-dotenv";
+import env from "../../config/env";
 import axios from 'axios';
 
 

@@ -1,6 +1,46 @@
-autograder-backend/node_modules/
-autograder-frontend/node_modules/
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files / secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Node / frontend / backend
+node_modules/
+autograder-frontend/build/
+autograder-frontend/dist/
+autograder-backend/dist/
+coverage/
+
+# Python / Flask
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.python-version
+.venv/
+venv/
+env/
+myenv/
+
+# Service-specific local files
 autograder-frontend/.env
 autograder-backend/.env
-evalPDFService/myenv/
+evalPDFService/.env
+evalPDFService/.venv/
 evalPDFService/venv/
+evalPDFService/myenv/
+evalPDFService/__pycache__/

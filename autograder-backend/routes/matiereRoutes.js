@@ -56,7 +56,7 @@ router.get("/", SubjectController.getSubjects);
  *     summary: Obtenir les classes où l'enseignant authentifié enseigne au moins une matière
  *     tags: [Subjects]
  *     security:
- *       - bearerAuth: []  // Cette ligne indique que la route nécessite une authentification avec un token JWT
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Liste des classes où l'enseignant authentifié enseigne
@@ -83,7 +83,7 @@ router.get(
  *     summary: Obtenir les matières enseignées par le professeur authentifié dans un niveau précis
  *     tags: [Subjects]
  *     security:
- *       - bearerAuth: []  // Cette ligne indique que la route nécessite une authentification avec un token JWT
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: class_id

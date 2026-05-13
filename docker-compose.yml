@@ -24,6 +24,7 @@ services:
       - "8000:8000"  # Mappe le port 8000 du conteneur au port 8000 de la machine hôte
     environment:
       - MONGO_URI=mongodb://mongo:27017/autograderDB  # URI de connexion à MongoDB avec identifiants
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
     depends_on:
       - mongo  # Assure que MongoDB démarre avant le backend
       - flask # Assure que Flask démarre avant le backend

@@ -2,10 +2,12 @@ import axios from "axios";
 import React, { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import Sidebar from "../components/Sidebar";
 import { FaTimes } from "react-icons/fa";
 import { Editor } from "@tinymce/tinymce-react";
-import env from "react-dotenv";
+import env from "../../config/env";
+import { useAuth } from "../../context/AuthContext";
 
 const CreateExam = () => {
   const [subject, setSubject] = useState("");
@@ -29,28 +31,61 @@ const CreateExam = () => {
   const [noSubjects, setNoSubjects] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { clearAuth } = useAuth();
 
   const apiUrl = env.API_URL || "";
   const token = Cookies.get("token");
+  const userRole = token ? jwtDecode(token).role : null;
+
+  const getAuthHeaders = () => ({
+    headers: {
+      Authorization: `Bearer ${Cookies.get("token") || ""}`,
+    },
+  });
 
   // Fonction pour récupérer les matières
   const fetchSubjects = async (levelIds) => {
     try {
       setLoadingSubjects(true);
       setNoSubjects(false);
-      const response = await axios.get(
-        `${apiUrl}/api/matieres/me/${levelIds.join(",")}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setSubjects(response.data);
-      if (response.data.length === 0) {
+
+      let nextSubjects = [];
+
+      if (userRole === "professeur") {
+        const response = await axios.get(
+          `${apiUrl}/api/matieres/me/${levelIds.join(",")}`,
+          getAuthHeaders()
+        );
+        nextSubjects = response.data;
+      } else {
+        const responses = await Promise.all(
+          levelIds.map((levelId) =>
+            axios.get(`${apiUrl}/api/matieres/by-class/${levelId}`, getAuthHeaders())
+          )
+        );
+
+        const subjectGroups = responses.map((response) => response.data);
+        nextSubjects = subjectGroups.reduce((commonSubjects, currentSubjects, index) => {
+          if (index === 0) {
+            return currentSubjects;
+          }
+
+          const currentIds = new Set(currentSubjects.map((subjectItem) => subjectItem._id));
+          return commonSubjects.filter((subjectItem) => currentIds.has(subjectItem._id));
+        }, []);
+      }
+
+      setSubjects(nextSubjects);
+      if (nextSubjects.length === 0) {
         setNoSubjects(true);
       }
     } catch (error) {
+      if (error.response?.status === 401) {
+        clearAuth();
+        setError("Votre session a expiré. Veuillez vous reconnecter.");
+        navigate("/login");
+        return;
+      }
       console.error("Erreur lors de la récupération des matières :", error);
       if (error.response && error.response.status === 404) {
         setNoSubjects(true);
@@ -65,17 +100,18 @@ const CreateExam = () => {
   // Fonction pour récupérer les niveaux
   const fetchLevels = async () => {
     try {
-      
-      const response = await axios.get(
-        `${apiUrl}/api/matieres/me/classes`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const endpoint =
+        userRole === "professeur" ? "/api/matieres/me/classes" : "/api/classes";
+
+      const response = await axios.get(`${apiUrl}${endpoint}`, getAuthHeaders());
       setLevels(response.data);
     } catch (error) {
+      if (error.response?.status === 401) {
+        clearAuth();
+        setError("Votre session a expiré. Veuillez vous reconnecter.");
+        navigate("/login");
+        return;
+      }
       console.error("Erreur lors de la récupération des niveaux :", error);
       setError("Erreur lors de la récupération des niveaux.");
     }
@@ -155,11 +191,7 @@ const CreateExam = () => {
         subject_id: subject,
         class_ids: selectedLevels,
         academicYear: examDate,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      }, getAuthHeaders());
 
       const examId = examResponse.data.examId;
 
@@ -173,20 +205,31 @@ const CreateExam = () => {
             answer_type: question.answer_type,
             answer_duplicated: question.answer_duplicated,
             points: question.points,
-          }
+          },
+          getAuthHeaders()
         );
 
         const questionId = questionResponse.data.questionId;
 
         // Créer la réponse associée
-        await axios.post(`${apiUrl}/api/reponses`, {
-          question_id: questionId,
-          answer: question.answer,
-        });
+        await axios.post(
+          `${apiUrl}/api/reponses`,
+          {
+            question_id: questionId,
+            answer: question.answer,
+          },
+          getAuthHeaders()
+        );
       }
 
       navigate("/subject-list");
     } catch (error) {
+      if (error.response?.status === 401) {
+        clearAuth();
+        setError("Votre session a expiré. Veuillez vous reconnecter.");
+        navigate("/login");
+        return;
+      }
       console.error(
         "Erreur lors de la création de l'examen, des questions ou des réponses :",
         error

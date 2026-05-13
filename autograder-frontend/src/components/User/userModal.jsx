@@ -5,7 +5,7 @@ import { FaEyeSlash, FaEye } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 const schema = z.object({
   email: z.string().email({ message: "Format d'email invalide" }).min(1, { message: "L'email est requis" }),

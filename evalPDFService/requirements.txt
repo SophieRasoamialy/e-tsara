@@ -1,9 +1,6 @@
 Flask==3.0.2
-PyMuPDF==1.21.1  
-sentence-transformers==2.2.2
-huggingface-hub==0.8.1
-beautifulsoup4==4.12.3 
+PyMuPDF>=1.24,<1.26
 requests==2.31.0  
 gunicorn==23.0.0
-opencv-python==4.10.0.84
-pytesseract==0.3.13
+gevent==24.2.1
+python-dotenv==1.0.1

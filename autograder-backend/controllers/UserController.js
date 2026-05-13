@@ -123,19 +123,27 @@ exports.login = async (req, res) => {
       return res.status(400).json({ msg: 'Email ou mot de passe incorrect' });
     }
 
+    if (!user.role || !user.role.name) {
+      console.error("Utilisateur sans rôle valide:", user.email);
+      return res.status(500).json({
+        msg: "Le compte utilisateur n'a pas de rôle valide. Relancez le seed administrateur."
+      });
+    }
+
     // Génération du token JWT
     const token = jwt.sign({ id: user._id, role: user.role.name }, SECRET_KEY, { expiresIn: '1h' });
 
     // Définir le cookie avec SameSite
     res.cookie('token', token, {
-      HttpOnly: true,
-      Secure:  true, 
-      SameSite: 'None', 
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
     });
     // Retourner les informations de l'utilisateur et le token JWT
     res.json({ msg: 'Connexion réussie', token, role: user.role.name });
 
   } catch (error) {
+    console.error("Erreur lors du login :", error);
     res.status(500).json({ msg: 'Erreur du serveur' });
   }
 };

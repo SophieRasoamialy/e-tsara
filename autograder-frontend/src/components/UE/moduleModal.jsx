@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { FaTimes } from "react-icons/fa";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 function ModuleModal({ isOpen, onClose, selectedModule, fetchModules }) {
   const [name, setName] = useState("");

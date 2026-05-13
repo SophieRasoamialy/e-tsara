@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaTimes } from "react-icons/fa";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 function SubjectModal({ isOpen, onClose, moduleId, selectedSubject, fetchSubjects }) {
   const [name, setName] = useState("");

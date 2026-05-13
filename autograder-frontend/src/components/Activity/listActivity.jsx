@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import env from "react-dotenv";
+import env from "../../config/env";
 
 function AdminActivityPage() {
   const [activities, setActivities] = useState([]);

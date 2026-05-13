@@ -6,7 +6,7 @@ import { UploadIcon } from "lucide-react";
 import { FaArrowLeft, FaSpinner } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
-import env from "react-dotenv";
+import env from "../../config/env";
 import Cookies from "js-cookie";
 
 // Styles réutilisables

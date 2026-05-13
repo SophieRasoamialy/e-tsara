@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 function StudentModal({ isOpen, onClose, selectedStudent, fetchStudents }) {
   const [matricule, setMatricule] = useState("");

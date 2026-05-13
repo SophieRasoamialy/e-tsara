@@ -5,7 +5,7 @@ import { FaSearch, FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
 import ModuleModal from "./moduleModal";
 import ListMatiere from "./listMatiere";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 function ListModule() {
   const [modules, setModules] = useState([]);

@@ -17,7 +17,7 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 import EditablePdfViewer from "./editSheet";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 const PageFeuillesCorrigees = () => {
   const [pdfUrls, setPdfUrls] = useState([]);

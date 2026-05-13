@@ -8,7 +8,7 @@ import DetailEtudiant from "./detailEtudiant";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
-import env from "react-dotenv";
+import env from "../../config/env";
 
 function ListEtudiant() {
   const [etudiants, setEtudiants] = useState([]);
